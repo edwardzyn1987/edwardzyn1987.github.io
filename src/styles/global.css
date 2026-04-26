@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap');
+
+:root {
+  --color-bg: #f5f0e8;
+  --color-bg-end: #e8dcc8;
+  --color-primary: #8b7355;
+  --color-primary-light: #c4b39a;
+  --color-text-title: #2c2c2c;
+  --color-text-body: #3c3c3c;
+  --color-text-secondary: #666;
+  --color-text-muted: #999;
+  --color-card-bg: rgba(255, 255, 255, 0.5);
+  --color-border: rgba(139, 115, 85, 0.2);
+  --color-tag-border: #c4b39a;
+  --color-tag-text: #8b7355;
+
+  --font-brush: 'Ma Shan Zheng', cursive;
+  --font-serif: 'Noto Serif SC', 'Songti SC', serif;
+  --font-subtitle: 'ZCOOL XiaoWei', serif;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-serif);
+  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg-end) 100%);
+  color: var(--color-text-body);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--color-tag-text);
+  border: 1px solid var(--color-tag-border);
+  padding: 2px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tag:hover {
+  background: rgba(139, 115, 85, 0.1);
+}
