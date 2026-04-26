@@ -1,0 +1,203 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  currentCategory?: string;
+  currentTag?: string;
+}
+
+const { currentCategory, currentTag } = Astro.props;
+const poems = await getCollection('poems');
+
+const categories = ['五言绝句', '七言绝句', '五言律诗', '七言律诗', '词'] as const;
+const categoryCounts = new Map<string, number>();
+for (const poem of poems) {
+  const cat = poem.data.category;
+  categoryCounts.set(cat, (categoryCounts.get(cat) ?? 0) + 1);
+}
+
+const tagCounts = new Map<string, number>();
+for (const poem of poems) {
+  for (const tag of poem.data.tags) {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  }
+}
+const sortedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <input
+      type="text"
+      class="search-input"
+      id="poem-search"
+      placeholder="🔍 搜索诗词..."
+      autocomplete="off"
+    />
+    <div class="search-results" id="search-results"></div>
+  </div>
+
+  <div class="sidebar-section">
+    <h4 class="sidebar-title">分 类</h4>
+    <nav class="sidebar-nav">
+      <a
+        href="/poems"
+        class:list={['sidebar-link', { active: !currentCategory }]}
+      >
+        全部 ({poems.length})
+      </a>
+      {categories.map(cat => {
+        const count = categoryCounts.get(cat) ?? 0;
+        return count > 0 ? (
+          <a
+            href={`/poems?category=${encodeURIComponent(cat)}`}
+            class:list={['sidebar-link', { active: currentCategory === cat }]}
+          >
+            {cat} ({count})
+          </a>
+        ) : null;
+      })}
+    </nav>
+  </div>
+
+  <div class="sidebar-section">
+    <h4 class="sidebar-title">标 签</h4>
+    <div class="tag-cloud">
+      {sortedTags.map(([tag]) => (
+        <a
+          href={`/poems?tag=${encodeURIComponent(tag)}`}
+          class:list={['tag', { active: currentTag === tag }]}
+        >
+          {tag}
+        </a>
+      ))}
+    </div>
+  </div>
+</aside>
+
+<style>
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    padding: 24px 18px;
+    border-right: 1px solid var(--color-border);
+    background: rgba(139, 115, 85, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    height: calc(100vh - 57px);
+    position: sticky;
+    top: 57px;
+    overflow-y: auto;
+  }
+
+  .sidebar-section {}
+
+  .sidebar-title {
+    font-size: 12px;
+    color: var(--color-primary);
+    letter-spacing: 4px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 8px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    color: var(--color-text-body);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus {
+    border-color: var(--color-primary);
+  }
+
+  .search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .search-results {
+    margin-top: 8px;
+    display: none;
+  }
+
+  .search-results.visible {
+    display: block;
+  }
+
+  .search-results :global(.search-item) {
+    display: block;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--color-text-body);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .search-results :global(.search-item:hover) {
+    background: rgba(139, 115, 85, 0.08);
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sidebar-link {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    padding: 5px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .sidebar-link:hover {
+    background: rgba(139, 115, 85, 0.08);
+    color: var(--color-text-body);
+  }
+
+  .sidebar-link.active {
+    color: var(--color-text-title);
+    font-weight: 600;
+    background: rgba(139, 115, 85, 0.1);
+  }
+
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag.active {
+    background: rgba(139, 115, 85, 0.15);
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      width: 100%;
+      height: auto;
+      position: static;
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+      flex-direction: row;
+      flex-wrap: wrap;
+      padding: 16px;
+      gap: 16px;
+    }
+
+    .sidebar-section {
+      flex: 1;
+      min-width: 150px;
+    }
+  }
+</style>
