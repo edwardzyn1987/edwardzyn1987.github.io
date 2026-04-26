@@ -25,6 +25,9 @@ const poemData = poems.map(poem => ({
   hasAudio: !!poem.data.audio,
   excerpt: getExcerpt(poem.body ?? ''),
 }));
+
+// Serialise all poem data (including body) for Fuse.js client-side search
+const allPoems = poems;
 ---
 
 <BaseLayout title="诗词">
@@ -57,6 +60,60 @@ const poemData = poems.map(poem => ({
 
 <!-- Embed all poem data for client-side filtering (hidden template, not a module script) -->
 <template id="poems-data" set:text={JSON.stringify(poemData)}></template>
+
+<script define:vars={{ searchData: allPoems.map(p => ({
+  title: p.data.title,
+  slug: p.id,
+  category: p.data.category,
+  tags: p.data.tags,
+  body: (p.body ?? '').replace(/\n/g, ' ').trim(),
+})) }}>
+  window.__POEM_SEARCH_DATA__ = searchData;
+</script>
+
+<script>
+  import Fuse from 'fuse.js';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const data = (window as any).__POEM_SEARCH_DATA__;
+    if (!data) return;
+
+    const fuse = new Fuse(data, {
+      keys: [
+        { name: 'title', weight: 2 },
+        { name: 'body', weight: 1 },
+        { name: 'tags', weight: 1.5 },
+      ],
+      threshold: 0.4,
+      includeMatches: true,
+    });
+
+    const input = document.getElementById('poem-search') as HTMLInputElement;
+    const results = document.getElementById('search-results');
+    if (!input || !results) return;
+
+    input.addEventListener('input', () => {
+      const query = input.value.trim();
+      if (!query) {
+        results.classList.remove('visible');
+        results.innerHTML = '';
+        return;
+      }
+
+      const matches = fuse.search(query).slice(0, 8);
+      if (matches.length === 0) {
+        results.classList.add('visible');
+        results.innerHTML = '<div class="search-item" style="color:var(--color-text-muted)">无结果</div>';
+        return;
+      }
+
+      results.classList.add('visible');
+      results.innerHTML = matches
+        .map(m => `<a class="search-item" href="/poems/${m.item.slug}">${m.item.title} <span style="font-size:11px;color:var(--color-text-muted)">${m.item.category}</span></a>`)
+        .join('');
+    });
+  });
+</script>
 
 <script>
   const raw = document.getElementById('poems-data')?.innerHTML ?? '[]';
