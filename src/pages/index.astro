@@ -1,17 +1,161 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PoemCard from '../components/PoemCard.astro';
 import { getCollection } from 'astro:content';
 
-const poems = await getCollection('poems');
+const allPoems = await getCollection('poems');
+const featured = allPoems
+  .filter(p => p.data.featured)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 3);
+
+const latest = allPoems
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 5);
+
+function getExcerpt(body: string): string {
+  const lines = body.trim().split('\n').filter(l => l.trim());
+  return lines.slice(0, 2).join('，').replace(/，$/, '');
+}
 ---
 
 <BaseLayout title="首页">
-  <main style="padding:40px;text-align:center;">
-    <h1 style="font-family:var(--font-brush);font-size:48px;color:var(--color-text-title);letter-spacing:8px;">
-      墨韵诗笺
-    </h1>
-    <p style="margin-top:20px;color:var(--color-text-secondary);">
-      共 {poems.length} 首诗词
-    </p>
+  <main class="home">
+    <section class="hero">
+      <h1 class="hero-title">墨韵诗笺</h1>
+      <p class="hero-subtitle">一 纸 素 笺 · 半 卷 清 风</p>
+      <div class="hero-divider"></div>
+      <p class="hero-desc">以诗为径，以词为桥，记录心中山水</p>
+    </section>
+
+    {featured.length > 0 && (
+      <section class="section">
+        <h2 class="section-title">精 选 诗 词</h2>
+        <div class="poem-list">
+          {featured.map(poem => (
+            <PoemCard
+              title={poem.data.title}
+              slug={poem.id}
+              category={poem.data.category}
+              tags={poem.data.tags}
+              date={poem.data.date}
+              excerpt={getExcerpt(poem.body ?? '')}
+              hasAudio={!!poem.data.audio}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section class="section">
+      <h2 class="section-title">最 新 发 布</h2>
+      <div class="poem-list">
+        {latest.map(poem => (
+          <PoemCard
+            title={poem.data.title}
+            slug={poem.id}
+            category={poem.data.category}
+            tags={poem.data.tags}
+            date={poem.data.date}
+            excerpt={getExcerpt(poem.body ?? '')}
+            hasAudio={!!poem.data.audio}
+          />
+        ))}
+      </div>
+    </section>
+
+    <div class="home-cta">
+      <a href="/poems" class="cta-link">浏览全部诗词 →</a>
+    </div>
   </main>
 </BaseLayout>
+
+<style>
+  .home {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 40px 60px;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 80px 0 50px;
+  }
+
+  .hero-title {
+    font-family: var(--font-brush);
+    font-size: 56px;
+    color: var(--color-text-title);
+    letter-spacing: 12px;
+    font-weight: normal;
+  }
+
+  .hero-subtitle {
+    font-family: var(--font-subtitle);
+    font-size: 16px;
+    color: var(--color-text-muted);
+    letter-spacing: 6px;
+    margin-top: 8px;
+  }
+
+  .hero-divider {
+    width: 60px;
+    height: 1px;
+    background: var(--color-primary-light);
+    margin: 24px auto;
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    letter-spacing: 2px;
+  }
+
+  .section {
+    margin-top: 50px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    color: var(--color-primary);
+    letter-spacing: 6px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .poem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .home-cta {
+    text-align: center;
+    margin-top: 50px;
+  }
+
+  .cta-link {
+    display: inline-block;
+    font-size: 14px;
+    color: var(--color-primary);
+    letter-spacing: 2px;
+    padding: 10px 30px;
+    border: 1px solid var(--color-primary-light);
+    border-radius: 24px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .cta-link:hover {
+    background: rgba(139, 115, 85, 0.08);
+    text-decoration: none;
+  }
+
+  @media (max-width: 768px) {
+    .home { padding: 0 20px 40px; }
+    .hero { padding: 50px 0 30px; }
+    .hero-title { font-size: 40px; letter-spacing: 6px; }
+  }
+</style>
