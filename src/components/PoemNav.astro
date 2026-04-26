@@ -1,0 +1,79 @@
+---
+interface Props {
+  prevPoem?: { title: string; slug: string } | null;
+  nextPoem?: { title: string; slug: string } | null;
+}
+
+const { prevPoem, nextPoem } = Astro.props;
+---
+
+<nav class="poem-nav">
+  <div class="poem-nav-side">
+    {prevPoem ? (
+      <a href={`/poems/${prevPoem.slug}`} class="poem-nav-link">
+        <span class="poem-nav-arrow">←</span>
+        <span class="poem-nav-label">上一首</span>
+        <span class="poem-nav-title">{prevPoem.title}</span>
+      </a>
+    ) : <span />}
+  </div>
+  <div class="poem-nav-side right">
+    {nextPoem ? (
+      <a href={`/poems/${nextPoem.slug}`} class="poem-nav-link right">
+        <span class="poem-nav-label">下一首</span>
+        <span class="poem-nav-title">{nextPoem.title}</span>
+        <span class="poem-nav-arrow">→</span>
+      </a>
+    ) : <span />}
+  </div>
+</nav>
+
+<style>
+  .poem-nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-top: 1px solid var(--color-border);
+    margin-top: 40px;
+  }
+
+  .poem-nav-side {
+    max-width: 45%;
+  }
+
+  .poem-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--color-primary);
+    font-size: 14px;
+    transition: opacity 0.2s;
+  }
+
+  .poem-nav-link:hover {
+    opacity: 0.7;
+    text-decoration: none;
+  }
+
+  .poem-nav-link.right {
+    text-align: right;
+  }
+
+  .poem-nav-arrow {
+    font-size: 18px;
+  }
+
+  .poem-nav-label {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  .poem-nav-title {
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .poem-nav { padding: 16px 20px; }
+  }
+</style>

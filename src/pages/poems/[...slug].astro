@@ -1,0 +1,168 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PoemNav from '../../components/PoemNav.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const poems = await getCollection('poems');
+  const sorted = poems.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+  return sorted.map((poem, index) => ({
+    params: { slug: poem.id },
+    props: {
+      poem,
+      prevPoem: index < sorted.length - 1
+        ? { title: sorted[index + 1].data.title, slug: sorted[index + 1].id }
+        : null,
+      nextPoem: index > 0
+        ? { title: sorted[index - 1].data.title, slug: sorted[index - 1].id }
+        : null,
+    },
+  }));
+}
+
+const { poem, prevPoem, nextPoem } = Astro.props;
+const { Content } = await render(poem);
+
+const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout title={poem.data.title}>
+  <main class="poem-detail">
+    <nav class="breadcrumb">
+      <a href="/">首页</a>
+      <span class="sep">/</span>
+      <a href={`/poems?category=${encodeURIComponent(poem.data.category)}`}>{poem.data.category}</a>
+      <span class="sep">/</span>
+      <span>{poem.data.title}</span>
+    </nav>
+
+    <article class="poem-article">
+      <h1 class="poem-title">{poem.data.title}</h1>
+      <p class="poem-meta">{poem.data.category} · {dateStr}</p>
+      <div class="poem-divider"></div>
+      <div class="poem-body">
+        <Content />
+      </div>
+      <div class="poem-tags">
+        <span class="tag">{poem.data.category}</span>
+        {poem.data.tags.map(tag => <span class="tag">{tag}</span>)}
+      </div>
+      {poem.data.note && (
+        <div class="poem-note">
+          <h4>创 作 手 记</h4>
+          <p>{poem.data.note}</p>
+        </div>
+      )}
+    </article>
+
+    <PoemNav prevPoem={prevPoem} nextPoem={nextPoem} />
+  </main>
+</BaseLayout>
+
+<style>
+  .poem-detail {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .breadcrumb {
+    padding: 14px 0;
+    margin: 0 40px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .breadcrumb a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .breadcrumb .sep {
+    margin: 0 8px;
+    color: var(--color-text-muted);
+  }
+
+  .poem-article {
+    text-align: center;
+    padding: 50px 40px 30px;
+  }
+
+  .poem-title {
+    font-family: var(--font-brush);
+    font-size: 36px;
+    color: var(--color-text-title);
+    letter-spacing: 8px;
+    margin-bottom: 10px;
+    font-weight: normal;
+  }
+
+  .poem-meta {
+    font-size: 14px;
+    color: var(--color-text-muted);
+    letter-spacing: 2px;
+  }
+
+  .poem-divider {
+    width: 50px;
+    height: 1px;
+    background: var(--color-primary-light);
+    margin: 20px auto 30px;
+  }
+
+  .poem-body {
+    font-size: 20px;
+    color: var(--color-text-body);
+    line-height: 2.4;
+    letter-spacing: 3px;
+  }
+
+  .poem-body :global(p) {
+    margin-bottom: 0;
+  }
+
+  .poem-tags {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .poem-note {
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--color-border);
+    text-align: left;
+  }
+
+  .poem-note h4 {
+    font-size: 14px;
+    color: var(--color-primary);
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .poem-note p {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.9;
+  }
+
+  @media (max-width: 768px) {
+    .poem-article { padding: 30px 20px 20px; }
+    .breadcrumb { margin: 0 20px; }
+    .poem-title { font-size: 28px; letter-spacing: 4px; }
+    .poem-body { font-size: 18px; }
+  }
+</style>
