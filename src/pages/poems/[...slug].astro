@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PoemNav from '../../components/PoemNav.astro';
+import AudioPlayer from '../../components/AudioPlayer.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -61,6 +62,10 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     </article>
 
     <PoemNav prevPoem={prevPoem} nextPoem={nextPoem} />
+
+    {poem.data.audio && (
+      <AudioPlayer audioSrc={`/audio/${poem.data.audio}`} />
+    )}
   </main>
 </BaseLayout>
 
