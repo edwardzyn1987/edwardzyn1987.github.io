@@ -1,0 +1,93 @@
+---
+interface Props {
+  title: string;
+  slug: string;
+  category: string;
+  tags: string[];
+  date: Date;
+  excerpt: string;
+  hasAudio: boolean;
+}
+
+const { title, slug, category, tags, date, excerpt, hasAudio } = Astro.props;
+
+const dateStr = date.toLocaleDateString('zh-CN', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<a href={`/poems/${slug}`} class="poem-card">
+  <div class="poem-card-header">
+    <h3 class="poem-card-title">{title}</h3>
+    {hasAudio && <span class="audio-badge" title="有朗诵音频">🔊</span>}
+  </div>
+  <p class="poem-card-excerpt">{excerpt}</p>
+  <div class="poem-card-footer">
+    <div class="poem-card-tags">
+      <span class="tag">{category}</span>
+      {tags.map(tag => <span class="tag">{tag}</span>)}
+    </div>
+    <span class="poem-card-date">{dateStr}</span>
+  </div>
+</a>
+
+<style>
+  .poem-card {
+    display: block;
+    background: var(--color-card-bg);
+    border-left: 3px solid var(--color-primary);
+    padding: 18px 22px;
+    border-radius: 0 8px 8px 0;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .poem-card:hover {
+    background: rgba(255, 255, 255, 0.7);
+    transform: translateX(4px);
+  }
+
+  .poem-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .poem-card-title {
+    font-size: 17px;
+    color: var(--color-text-title);
+    font-weight: 600;
+  }
+
+  .audio-badge {
+    font-size: 14px;
+    opacity: 0.6;
+  }
+
+  .poem-card-excerpt {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.9;
+    margin-bottom: 10px;
+  }
+
+  .poem-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .poem-card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .poem-card-date {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+</style>

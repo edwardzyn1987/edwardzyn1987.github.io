@@ -1,0 +1,213 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import PoemCard from '../components/PoemCard.astro';
+import { getCollection } from 'astro:content';
+
+// In static mode, we render all poems and filter client-side via JS.
+// Sidebar links use ?category= / ?tag= query params which JS reads on load.
+
+let poems = await getCollection('poems');
+poems.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+function getExcerpt(body: string): string {
+  const lines = body.trim().split('\n').filter(l => l.trim());
+  return lines.slice(0, 2).join('，').replace(/，$/, '');
+}
+
+// Serialise all poem metadata for client-side filtering
+const poemData = poems.map(poem => ({
+  id: poem.id,
+  title: poem.data.title,
+  category: poem.data.category,
+  tags: poem.data.tags,
+  date: poem.data.date.toISOString(),
+  hasAudio: !!poem.data.audio,
+  excerpt: getExcerpt(poem.body ?? ''),
+}));
+---
+
+<BaseLayout title="诗词">
+  <div class="poems-layout">
+    <Sidebar />
+    <main class="poems-main">
+      <div class="poems-header">
+        <h2 class="poems-heading" id="poems-heading">全部诗词</h2>
+        <span class="poems-count" id="poems-count"></span>
+      </div>
+
+      <!-- Static fallback list; JS will replace with filtered view -->
+      <div class="poems-list" id="poems-list">
+        {poems.map(poem => (
+          <PoemCard
+            title={poem.data.title}
+            slug={poem.id}
+            category={poem.data.category}
+            tags={poem.data.tags}
+            date={poem.data.date}
+            excerpt={getExcerpt(poem.body ?? '')}
+            hasAudio={!!poem.data.audio}
+          />
+        ))}
+      </div>
+      <p class="no-results" id="no-results" style="display:none">暂无符合条件的诗词</p>
+    </main>
+  </div>
+</BaseLayout>
+
+<!-- Embed all poem data for client-side filtering (hidden template, not a module script) -->
+<template id="poems-data" set:text={JSON.stringify(poemData)}></template>
+
+<script>
+  const raw = document.getElementById('poems-data')?.innerHTML ?? '[]';
+  const allPoems: Array<{
+    id: string;
+    title: string;
+    category: string;
+    tags: string[];
+    date: string;
+    hasAudio: boolean;
+    excerpt: string;
+  }> = JSON.parse(raw);
+
+  function getParams() {
+    const p = new URLSearchParams(window.location.search);
+    return { category: p.get('category'), tag: p.get('tag') };
+  }
+
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString('zh-CN', {
+      year: 'numeric', month: 'long', day: 'numeric',
+    });
+  }
+
+  function buildCard(poem: typeof allPoems[0]) {
+    const a = document.createElement('a');
+    a.href = `/poems/${poem.id}`;
+    a.className = 'poem-card';
+    a.innerHTML = `
+      <div class="poem-card-header">
+        <h3 class="poem-card-title">${poem.title}</h3>
+        ${poem.hasAudio ? '<span class="audio-badge" title="有朗诵音频">🔊</span>' : ''}
+      </div>
+      <p class="poem-card-excerpt">${poem.excerpt}</p>
+      <div class="poem-card-footer">
+        <div class="poem-card-tags">
+          <span class="tag">${poem.category}</span>
+          ${poem.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+        </div>
+        <span class="poem-card-date">${formatDate(poem.date)}</span>
+      </div>`;
+    return a;
+  }
+
+  function render() {
+    const { category, tag } = getParams();
+    const list = document.getElementById('poems-list')!;
+    const heading = document.getElementById('poems-heading')!;
+    const count = document.getElementById('poems-count')!;
+    const noResults = document.getElementById('no-results') as HTMLElement;
+
+    // Update active state on sidebar links
+    document.querySelectorAll<HTMLAnchorElement>('.sidebar-link').forEach(link => {
+      const url = new URL(link.href);
+      const lCat = url.searchParams.get('category');
+      const lTag = url.searchParams.get('tag');
+      // "全部" link is active when no filter
+      if (!lCat && !lTag) {
+        link.classList.toggle('active', !category && !tag);
+      } else {
+        link.classList.toggle('active', lCat === category && lTag === tag);
+      }
+    });
+    document.querySelectorAll<HTMLAnchorElement>('.tag-cloud .tag').forEach(link => {
+      const url = new URL(link.href);
+      link.classList.toggle('active', url.searchParams.get('tag') === tag);
+    });
+
+    let filtered = allPoems;
+    if (category) filtered = filtered.filter(p => p.category === category);
+    if (tag) filtered = filtered.filter(p => p.tags.includes(tag));
+
+    heading.textContent = category ?? tag ?? '全部诗词';
+    count.textContent = `共 ${filtered.length} 首`;
+
+    list.innerHTML = '';
+    if (filtered.length === 0) {
+      noResults.style.display = '';
+    } else {
+      noResults.style.display = 'none';
+      filtered.forEach(p => list.appendChild(buildCard(p)));
+    }
+  }
+
+  // Run on load and on popstate (browser back/forward)
+  render();
+  window.addEventListener('popstate', render);
+
+  // Intercept sidebar link clicks for SPA-style navigation (no full reload)
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest<HTMLAnchorElement>('a.sidebar-link, a.tag-cloud .tag, .tag-cloud a.tag');
+    if (!a) return;
+    // Only intercept same-origin /poems links
+    try {
+      const url = new URL(a.href);
+      if (url.pathname !== '/poems') return;
+      e.preventDefault();
+      window.history.pushState({}, '', a.href);
+      render();
+    } catch { /* non-URL, ignore */ }
+  });
+</script>
+
+<style>
+  .poems-layout {
+    display: flex;
+    min-height: calc(100vh - 57px);
+  }
+
+  .poems-main {
+    flex: 1;
+    padding: 28px 36px;
+    max-width: 800px;
+  }
+
+  .poems-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .poems-heading {
+    font-size: 18px;
+    color: var(--color-text-title);
+    font-weight: 600;
+    letter-spacing: 2px;
+  }
+
+  .poems-count {
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+
+  .poems-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .no-results {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 60px 0;
+    font-size: 15px;
+  }
+
+  @media (max-width: 768px) {
+    .poems-layout { flex-direction: column; }
+    .poems-main { padding: 20px 16px; }
+  }
+</style>
