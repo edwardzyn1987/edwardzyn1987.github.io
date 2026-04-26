@@ -1,11 +1,17 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const poems = await getCollection('poems');
 ---
 
 <BaseLayout title="首页">
-  <main style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+  <main style="padding:40px;text-align:center;">
     <h1 style="font-family:var(--font-brush);font-size:48px;color:var(--color-text-title);letter-spacing:8px;">
       墨韵诗笺
     </h1>
+    <p style="margin-top:20px;color:var(--color-text-secondary);">
+      共 {poems.length} 首诗词
+    </p>
   </main>
 </BaseLayout>
