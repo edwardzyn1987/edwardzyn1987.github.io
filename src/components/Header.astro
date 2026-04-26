@@ -1,0 +1,118 @@
+---
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+  { label: '首页', href: '/' },
+  { label: '诗词', href: '/poems' },
+  { label: '关于', href: '/about' },
+  { label: '留言', href: '/guestbook' },
+];
+---
+
+<header class="site-header">
+  <a href="/" class="site-logo">墨韵诗笺</a>
+  <nav class="site-nav">
+    {navItems.map(item => (
+      <a
+        href={item.href}
+        class:list={['nav-link', { active: currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href)) }]}
+      >
+        {item.label}
+      </a>
+    ))}
+  </nav>
+  <button class="mobile-menu-btn" aria-label="菜单">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</header>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 40px;
+    border-bottom: 1px solid var(--color-border);
+    background: rgba(245, 240, 232, 0.9);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .site-logo {
+    font-family: var(--font-brush);
+    font-size: 24px;
+    color: var(--color-text-title);
+    letter-spacing: 4px;
+    text-decoration: none;
+  }
+
+  .site-nav {
+    display: flex;
+    gap: 30px;
+  }
+
+  .nav-link {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    letter-spacing: 2px;
+    text-decoration: none;
+    padding-bottom: 4px;
+    transition: color 0.2s;
+  }
+
+  .nav-link:hover {
+    color: var(--color-text-title);
+  }
+
+  .nav-link.active {
+    color: var(--color-text-title);
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-primary);
+  }
+
+  .mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .mobile-menu-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--color-text-title);
+    transition: all 0.3s;
+  }
+
+  @media (max-width: 768px) {
+    .site-header { padding: 12px 20px; }
+    .site-nav { display: none; }
+    .site-nav.open {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(245, 240, 232, 0.98);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--color-border);
+      gap: 16px;
+    }
+    .mobile-menu-btn { display: flex; }
+  }
+</style>
+
+<script>
+  const btn = document.querySelector('.mobile-menu-btn');
+  const nav = document.querySelector('.site-nav');
+  btn?.addEventListener('click', () => nav?.classList.toggle('open'));
+</script>

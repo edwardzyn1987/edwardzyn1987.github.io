@@ -1,4 +1,6 @@
 ---
+import Header from '../components/Header.astro';
+
 interface Props {
   title: string;
   description?: string;
@@ -17,6 +19,7 @@ const { title, description = '古体诗词个人展示' } = Astro.props;
     <title>{title} | 墨韵诗笺</title>
   </head>
   <body>
+    <Header />
     <slot />
   </body>
 </html>
