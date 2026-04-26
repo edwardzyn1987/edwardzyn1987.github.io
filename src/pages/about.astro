@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="关于">
+  <main class="about-page">
+    <h1 class="page-title">关 于</h1>
+    <div class="page-divider"></div>
+
+    <section class="about-section">
+      <h2>作 者</h2>
+      <p>
+        此处填写你的个人介绍。可以写一段简短的自我描述，
+        你是谁，为什么写诗词，诗词对你意味着什么。
+      </p>
+    </section>
+
+    <section class="about-section">
+      <h2>诗 词 观</h2>
+      <p>
+        此处填写你对诗词创作的理解和追求。
+        你的写作理念，偏好的风格，欣赏的古人诗词等。
+      </p>
+    </section>
+
+    <section class="about-section">
+      <h2>联 系</h2>
+      <p>
+        如果你想与我交流诗词，欢迎在<a href="/guestbook">留言板</a>留言。
+      </p>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .about-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 50px 40px 80px;
+  }
+
+  .page-title {
+    font-family: var(--font-brush);
+    font-size: 36px;
+    color: var(--color-text-title);
+    letter-spacing: 8px;
+    text-align: center;
+    font-weight: normal;
+  }
+
+  .page-divider {
+    width: 50px;
+    height: 1px;
+    background: var(--color-primary-light);
+    margin: 20px auto 40px;
+  }
+
+  .about-section {
+    margin-bottom: 36px;
+  }
+
+  .about-section h2 {
+    font-size: 16px;
+    color: var(--color-primary);
+    letter-spacing: 4px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .about-section p {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    line-height: 2;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 768px) {
+    .about-page { padding: 30px 20px 60px; }
+    .page-title { font-size: 28px; }
+  }
+</style>
