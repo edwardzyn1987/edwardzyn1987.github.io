@@ -8,7 +8,7 @@ const poems = defineCollection({
     category: z.enum(['五言绝句', '七言绝句', '五言律诗', '七言律诗', '词']),
     tags: z.array(z.string()),
     date: z.coerce.date(),
-    audio: z.string().optional(),
+    video: z.string().optional(),
     note: z.string().optional(),
     featured: z.boolean().default(false),
   }),

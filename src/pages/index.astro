@@ -40,7 +40,7 @@ function getExcerpt(body: string): string {
               tags={poem.data.tags}
               date={poem.data.date}
               excerpt={getExcerpt(poem.body ?? '')}
-              hasAudio={!!poem.data.audio}
+              hasVideo={!!poem.data.video}
             />
           ))}
         </div>
