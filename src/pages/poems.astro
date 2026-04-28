@@ -22,7 +22,7 @@ const poemData = poems.map(poem => ({
   category: poem.data.category,
   tags: poem.data.tags,
   date: poem.data.date.toISOString(),
-  hasAudio: !!poem.data.audio,
+  hasVideo: !!poem.data.video,
   excerpt: getExcerpt(poem.body ?? ''),
 }));
 
@@ -49,7 +49,7 @@ const allPoems = poems;
             tags={poem.data.tags}
             date={poem.data.date}
             excerpt={getExcerpt(poem.body ?? '')}
-            hasAudio={!!poem.data.audio}
+            hasVideo={!!poem.data.video}
           />
         ))}
       </div>
@@ -123,7 +123,7 @@ const allPoems = poems;
     category: string;
     tags: string[];
     date: string;
-    hasAudio: boolean;
+    hasVideo: boolean;
     excerpt: string;
   }> = JSON.parse(raw);
 
@@ -145,7 +145,7 @@ const allPoems = poems;
     a.innerHTML = `
       <div class="poem-card-header">
         <h3 class="poem-card-title">${poem.title}</h3>
-        ${poem.hasAudio ? '<span class="audio-badge" title="有朗诵音频">🔊</span>' : ''}
+        ${poem.hasVideo ? '<span class="video-badge" title="有朗诵视频">🎬</span>' : ''}
       </div>
       <p class="poem-card-excerpt">${poem.excerpt}</p>
       <div class="poem-card-footer">

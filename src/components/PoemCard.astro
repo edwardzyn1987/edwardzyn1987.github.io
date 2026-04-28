@@ -6,10 +6,10 @@ interface Props {
   tags: string[];
   date: Date;
   excerpt: string;
-  hasAudio: boolean;
+  hasVideo: boolean;
 }
 
-const { title, slug, category, tags, date, excerpt, hasAudio } = Astro.props;
+const { title, slug, category, tags, date, excerpt, hasVideo } = Astro.props;
 
 const dateStr = date.toLocaleDateString('zh-CN', {
   year: 'numeric',
@@ -21,7 +21,7 @@ const dateStr = date.toLocaleDateString('zh-CN', {
 <a href={`/poems/${slug}`} class="poem-card">
   <div class="poem-card-header">
     <h3 class="poem-card-title">{title}</h3>
-    {hasAudio && <span class="audio-badge" title="有朗诵音频">🔊</span>}
+    {hasVideo && <span class="video-badge" title="有朗诵视频">🎬</span>}
   </div>
   <p class="poem-card-excerpt">{excerpt}</p>
   <div class="poem-card-footer">
@@ -62,7 +62,7 @@ const dateStr = date.toLocaleDateString('zh-CN', {
     font-weight: 600;
   }
 
-  .audio-badge {
+  .video-badge {
     font-size: 14px;
     opacity: 0.6;
   }
