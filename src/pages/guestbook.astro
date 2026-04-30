@@ -8,29 +8,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="page-divider"></div>
     <p class="page-desc">欢迎留下你的感想与交流，期待与你诗词相会。</p>
 
-    <div class="giscus-container">
-      <script
-        src="https://giscus.app/client.js"
-        data-repo="edwardzyn1987/edwardzyn1987.github.io"
-        data-repo-id="R_kgDOSNm1yA"
-        data-category="General"
-        data-category-id="DIC_kwDOSNm1yM4C8CR-"
-        data-mapping="pathname"
-        data-strict="0"
-        data-reactions-enabled="1"
-        data-emit-metadata="0"
-        data-input-position="top"
-        data-theme="light"
-        data-lang="zh-CN"
-        crossorigin="anonymous"
-        async
-      ></script>
-      <noscript>
-        <p style="text-align:center;color:var(--color-text-muted);padding:40px 0;">
-          留言功能需要 JavaScript 支持。请在 GitHub 上的 Discussions 页面留言。
-        </p>
-      </noscript>
-    </div>
+    <div class="twikoo-container" id="tcomment"></div>
+    <script src="https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.all.min.js"></script>
+    <script>
+      twikoo.init({
+        envId: 'https://twikoo-pi-lake.vercel.app/',
+        el: '#tcomment',
+        lang: 'zh-CN',
+      });
+    </script>
   </main>
 </BaseLayout>
 
@@ -65,7 +51,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin-bottom: 40px;
   }
 
-  .giscus-container {
+  .twikoo-container {
     min-height: 300px;
   }
 
