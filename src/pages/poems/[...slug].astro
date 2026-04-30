@@ -92,8 +92,8 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
   </main>
 </BaseLayout>
 
-<script src="https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.all.min.js"></script>
-<script>
+<script is:inline src="https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.all.min.js"></script>
+<script is:inline>
   twikoo.init({
     envId: 'https://twikoo-pi-lake.vercel.app/',
     el: '#tcomment',
