@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PoemNav from '../../components/PoemNav.astro';
-import VideoPlayer from '../../components/VideoPlayer.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -43,7 +42,18 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     </nav>
 
     <article class="poem-article">
-      <h1 class="poem-title">{poem.data.title}</h1>
+      <div class="poem-title-row">
+        <h1 class="poem-title">{poem.data.title}</h1>
+        {poem.data.video && (
+          <button class="video-inline-btn" id="video-btn" aria-label="观看朗诵" title="观看朗诵">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+              <rect x="2" y="4" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/>
+              <path d="M18 8l4-2.5v11L18 14" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <span class="video-inline-label">观看</span>
+          </button>
+        )}
+      </div>
       <p class="poem-meta">{poem.data.category} · {dateStr}</p>
       <div class="poem-divider"></div>
       <div class="poem-body">
@@ -64,7 +74,15 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     <PoemNav prevPoem={prevPoem} nextPoem={nextPoem} />
 
     {poem.data.video && (
-      <VideoPlayer videoSrc={`/videos/${poem.data.video}`} />
+      <div class="video-modal" id="video-modal">
+        <div class="video-modal-backdrop" id="video-modal-backdrop"></div>
+        <div class="video-modal-content">
+          <button class="video-modal-close" id="video-modal-close" aria-label="关闭">✕</button>
+          <video id="video-el" controls preload="none">
+            <source src={`/videos/${poem.data.video}`} type="video/mp4" />
+          </video>
+        </div>
+      </div>
     )}
   </main>
 </BaseLayout>
@@ -170,4 +188,127 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     .poem-title { font-size: 28px; letter-spacing: 4px; }
     .poem-body { font-size: 18px; }
   }
+
+  .poem-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .video-inline-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(139, 115, 85, 0.1);
+    border: 1px solid var(--color-primary-light);
+    border-radius: 20px;
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--color-primary);
+    font-family: var(--font-serif);
+    font-size: 12px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .video-inline-btn:hover {
+    background: rgba(139, 115, 85, 0.2);
+    transform: scale(1.05);
+  }
+
+  .video-inline-label {
+    letter-spacing: 1px;
+  }
+
+  .video-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .video-modal.open {
+    display: flex;
+  }
+
+  .video-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  .video-modal-content {
+    position: relative;
+    max-width: 800px;
+    width: 90%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .video-modal-content video {
+    display: block;
+    width: 100%;
+    background: #000;
+  }
+
+  .video-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: background 0.2s;
+  }
+
+  .video-modal-close:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
 </style>
+
+<script>
+  const btn = document.getElementById('video-btn');
+  const modal = document.getElementById('video-modal');
+  const backdrop = document.getElementById('video-modal-backdrop');
+  const closeBtn = document.getElementById('video-modal-close');
+  const video = document.getElementById('video-el') as HTMLVideoElement;
+
+  function openModal() {
+    modal?.classList.add('open');
+    video?.play();
+  }
+
+  function closeModal() {
+    video?.pause();
+    modal?.classList.remove('open');
+  }
+
+  btn?.addEventListener('click', openModal);
+  backdrop?.addEventListener('click', closeModal);
+  closeBtn?.addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('open')) {
+      closeModal();
+    }
+  });
+</script>
