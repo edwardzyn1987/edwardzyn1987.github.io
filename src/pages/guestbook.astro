@@ -9,8 +9,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <p class="page-desc">欢迎留下你的感想与交流，期待与你诗词相会。</p>
 
     <div class="twikoo-container" id="tcomment"></div>
-    <script src="https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.all.min.js"></script>
-    <script>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.all.min.js"></script>
+    <script is:inline>
       twikoo.init({
         envId: 'https://twikoo-pi-lake.vercel.app/',
         el: '#tcomment',
