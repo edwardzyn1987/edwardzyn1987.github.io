@@ -73,6 +73,11 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
 
     <PoemNav prevPoem={prevPoem} nextPoem={nextPoem} />
 
+    <section class="poem-comments">
+      <h4 class="comments-title">留 言</h4>
+      <div id="tcomment"></div>
+    </section>
+
     {poem.data.video && (
       <div class="video-modal" id="video-modal">
         <div class="video-modal-backdrop" id="video-modal-backdrop"></div>
@@ -86,6 +91,15 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     )}
   </main>
 </BaseLayout>
+
+<script src="https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.all.min.js"></script>
+<script>
+  twikoo.init({
+    envId: 'https://twikoo-pi-lake.vercel.app/',
+    el: '#tcomment',
+    lang: 'zh-CN',
+  });
+</script>
 
 <style>
   .poem-detail {
@@ -187,6 +201,24 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     .breadcrumb { margin: 0 20px; }
     .poem-title { font-size: 28px; letter-spacing: 4px; }
     .poem-body { font-size: 18px; }
+  }
+
+  .poem-comments {
+    margin-top: 40px;
+    padding: 30px 40px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .comments-title {
+    font-size: 14px;
+    color: var(--color-primary);
+    letter-spacing: 4px;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .poem-comments { padding: 20px; }
   }
 
   .poem-title-row {
