@@ -8,13 +8,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="page-divider"></div>
     <p class="page-desc">欢迎留下你的感想与交流，期待与你诗词相会。</p>
 
-    <div class="twikoo-container" id="tcomment"></div>
-    <script is:inline src="https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.all.min.js"></script>
-    <script is:inline>
-      twikoo.init({
-        envId: 'https://twikoo-pi-lake.vercel.app/',
-        el: '#tcomment',
+    <div class="waline-container" id="waline"></div>
+    <link is:inline rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" />
+    <script is:inline type="module">
+      import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+      init({
+        el: '#waline',
+        serverURL: 'https://velvety-sunshine-3328ad.netlify.app/.netlify/functions/comment',
         lang: 'zh-CN',
+        path: '/guestbook/',
       });
     </script>
   </main>
@@ -51,7 +53,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin-bottom: 40px;
   }
 
-  .twikoo-container {
+  .waline-container {
     min-height: 300px;
   }
 
