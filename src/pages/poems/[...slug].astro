@@ -75,7 +75,7 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
 
     <section class="poem-comments">
       <h4 class="comments-title">留 言</h4>
-      <div id="tcomment"></div>
+      <div id="waline"></div>
     </section>
 
     {poem.data.video && (
@@ -92,11 +92,12 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
   </main>
 </BaseLayout>
 
-<script is:inline src="https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.all.min.js"></script>
-<script is:inline>
-  twikoo.init({
-    envId: 'https://twikoo-pi-lake.vercel.app/',
-    el: '#tcomment',
+<link is:inline rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" />
+<script is:inline type="module">
+  import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+  init({
+    el: '#waline',
+    serverURL: 'https://velvety-sunshine-3328ad.netlify.app/.netlify/functions/comment',
     lang: 'zh-CN',
   });
 </script>
