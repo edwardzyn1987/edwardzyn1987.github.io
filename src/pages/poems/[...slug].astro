@@ -69,6 +69,14 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
           <p>{poem.data.note}</p>
         </div>
       )}
+      {poem.data.originalPoem && (
+        <div class="poem-original">
+          <h4>原 玉</h4>
+          <p class="original-title">{poem.data.originalPoem.title}</p>
+          <p class="original-author">{poem.data.originalPoem.author}</p>
+          <pre class="original-text">{poem.data.originalPoem.text}</pre>
+        </div>
+      )}
     </article>
 
     <PoemNav prevPoem={prevPoem} nextPoem={nextPoem} />
@@ -180,6 +188,53 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     font-size: 14px;
     color: var(--color-text-secondary);
     line-height: 1.9;
+  }
+
+  .poem-original {
+    margin-top: 36px;
+    padding: 24px 28px;
+    background: rgba(218, 198, 161, 0.15);
+    border: 1px solid var(--color-primary-light);
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .poem-original h4 {
+    font-size: 14px;
+    color: var(--color-primary);
+    letter-spacing: 6px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .original-title {
+    font-family: var(--font-brush);
+    font-size: 22px;
+    color: var(--color-text-title);
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .original-author {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+  }
+
+  .original-text {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-text-body);
+    line-height: 2.0;
+    letter-spacing: 2px;
+    white-space: pre-line;
+    margin: 0;
+    background: transparent;
+    padding: 0;
+    border: none;
+    text-align: center;
   }
 
   @media (max-width: 768px) {

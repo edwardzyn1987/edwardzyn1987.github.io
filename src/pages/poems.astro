@@ -129,7 +129,11 @@ const allPoems = poems;
 
   function getParams() {
     const p = new URLSearchParams(window.location.search);
-    return { category: p.get('category'), tag: p.get('tag') };
+    return {
+      category: p.get('category'),
+      tag: p.get('tag'),
+      year: p.get('year') ? parseInt(p.get('year')!, 10) : null,
+    };
   }
 
   function formatDate(iso: string) {
@@ -159,7 +163,7 @@ const allPoems = poems;
   }
 
   function render() {
-    const { category, tag } = getParams();
+    const { category, tag, year } = getParams();
     const list = document.getElementById('poems-list')!;
     const heading = document.getElementById('poems-heading')!;
     const count = document.getElementById('poems-count')!;
@@ -170,9 +174,13 @@ const allPoems = poems;
       const url = new URL(link.href);
       const lCat = url.searchParams.get('category');
       const lTag = url.searchParams.get('tag');
+      const lYearStr = url.searchParams.get('year');
+      const lYear = lYearStr ? parseInt(lYearStr, 10) : null;
       // "全部" link is active when no filter
-      if (!lCat && !lTag) {
-        link.classList.toggle('active', !category && !tag);
+      if (!lCat && !lTag && !lYear) {
+        link.classList.toggle('active', !category && !tag && !year);
+      } else if (lYear !== null) {
+        link.classList.toggle('active', lYear === year);
       } else {
         link.classList.toggle('active', lCat === category && lTag === tag);
       }
@@ -185,8 +193,9 @@ const allPoems = poems;
     let filtered = allPoems;
     if (category) filtered = filtered.filter(p => p.category === category);
     if (tag) filtered = filtered.filter(p => p.tags.includes(tag));
+    if (year) filtered = filtered.filter(p => new Date(p.date).getFullYear() === year);
 
-    heading.textContent = category ?? tag ?? '全部诗词';
+    heading.textContent = category ?? tag ?? (year ? `${year} 年` : '全部诗词');
     count.textContent = `共 ${filtered.length} 首`;
 
     list.innerHTML = '';
