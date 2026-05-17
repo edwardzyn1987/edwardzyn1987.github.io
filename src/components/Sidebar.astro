@@ -4,12 +4,13 @@ import { getCollection } from 'astro:content';
 interface Props {
   currentCategory?: string;
   currentTag?: string;
+  currentYear?: number;
 }
 
-const { currentCategory, currentTag } = Astro.props;
+const { currentCategory, currentTag, currentYear } = Astro.props;
 const poems = await getCollection('poems');
 
-const categories = ['五言绝句', '七言绝句', '五言律诗', '七言律诗', '词'] as const;
+const categories = ['五言绝句', '七言绝句', '五言律诗', '七言律诗', '五言古诗', '词'] as const;
 const categoryCounts = new Map<string, number>();
 for (const poem of poems) {
   const cat = poem.data.category;
@@ -23,6 +24,13 @@ for (const poem of poems) {
   }
 }
 const sortedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
+
+const yearCounts = new Map<number, number>();
+for (const poem of poems) {
+  const year = poem.data.date.getFullYear();
+  yearCounts.set(year, (yearCounts.get(year) ?? 0) + 1);
+}
+const sortedYears = [...yearCounts.entries()].sort((a, b) => b[0] - a[0]);
 ---
 
 <aside class="sidebar">
@@ -72,6 +80,20 @@ const sortedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
         </a>
       ))}
     </div>
+  </div>
+
+  <div class="sidebar-section">
+    <h4 class="sidebar-title">年 份</h4>
+    <nav class="sidebar-nav">
+      {sortedYears.map(([year, count]) => (
+        <a
+          href={`/poems?year=${year}`}
+          class:list={['sidebar-link', { active: currentYear === year }]}
+        >
+          {year} ({count})
+        </a>
+      ))}
+    </nav>
   </div>
 </aside>
 
