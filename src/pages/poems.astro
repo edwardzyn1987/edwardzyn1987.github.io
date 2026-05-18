@@ -12,7 +12,9 @@ poems.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 
 function getExcerpt(body: string): string {
   const lines = body.trim().split('\n').filter(l => l.trim());
-  return lines.slice(0, 2).join('，').replace(/，$/, '');
+  // Each line already ends with its own punctuation (。，？！), so join without
+  // adding extra commas — otherwise "凶。" + "，" + "柳..." → "凶。，柳..."
+  return lines.slice(0, 2).join('');
 }
 
 // Serialise all poem metadata for client-side filtering
