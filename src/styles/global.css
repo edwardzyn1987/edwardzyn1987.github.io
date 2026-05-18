@@ -38,6 +38,28 @@ body {
   color: var(--color-text-body);
   min-height: 100vh;
   line-height: 1.6;
+  position: relative;
+}
+
+/* 中国传统云纹背景点缀 — 白色云纹平铺，screen 混合让蓝底变透明 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.65;
+  background-image: url('/textures/cloud-pattern.jpg');
+  background-size: 500px auto;
+  background-position: center;
+  background-repeat: repeat;
+  mix-blend-mode: screen;
+}
+
+/* 内容层置于云纹之上 */
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 a {
