@@ -283,7 +283,7 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 200;
+    z-index: 1000;
     align-items: center;
     justify-content: center;
   }
@@ -356,6 +356,11 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
   const backdrop = document.getElementById('video-modal-backdrop');
   const closeBtn = document.getElementById('video-modal-close');
   const video = document.getElementById('video-el') as HTMLVideoElement;
+
+  // Move modal to body to escape parent stacking contexts (e.g. main z-index:1)
+  if (modal && modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
 
   function openModal() {
     modal?.classList.add('open');
