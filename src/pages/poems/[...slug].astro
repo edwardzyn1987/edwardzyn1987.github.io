@@ -305,38 +305,47 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
     position: relative;
     max-width: 800px;
     width: 90%;
+    max-height: 90vh;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
   }
 
   .video-modal-content video {
     display: block;
     width: 100%;
+    max-height: 90vh;
+    height: auto;
     background: #000;
+    object-fit: contain;
   }
 
   .video-modal-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 32px;
-    height: 32px;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     color: #fff;
-    border: none;
-    font-size: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 18px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
-    transition: background 0.2s;
+    z-index: 210;
+    transition: background 0.2s, transform 0.2s;
   }
 
   .video-modal-close:hover {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
+    transform: scale(1.1);
   }
 </style>
 
