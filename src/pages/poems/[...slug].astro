@@ -31,8 +31,13 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
 });
 
 const VIDEO_CDN = 'https://cdn.jsdelivr.net/gh/edwardzyn1987/edwardzyn1987.github.io@main/public/videos';
-const videoUrl = poem.data.video
-  ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodeURIComponent(poem.data.video)}` : `/videos/${poem.data.video}`)
+const videoBase = poem.data.video?.replace(/\.mp4$/, '');
+const encodedBase = videoBase ? encodeURIComponent(videoBase) : '';
+const videoUrlHls = videoBase
+  ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodedBase}/playlist.m3u8` : `/videos/${encodedBase}/playlist.m3u8`)
+  : null;
+const videoUrlMp4 = poem.data.video
+  ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodeURIComponent(poem.data.video)}` : `/videos/${encodeURIComponent(poem.data.video)}`)
   : null;
 ---
 
@@ -91,9 +96,8 @@ const videoUrl = poem.data.video
         <div class="video-modal-backdrop" id="video-modal-backdrop"></div>
         <button class="video-modal-close" id="video-modal-close" aria-label="关闭">✕</button>
         <div class="video-modal-content">
-          <video id="video-el" controls preload="none">
-            <source src={videoUrl} type="video/mp4" />
-          </video>
+          <video id="video-el" controls preload="none"
+                 data-hls={videoUrlHls} data-mp4={videoUrlMp4}></video>
         </div>
       </div>
     )}
@@ -360,16 +364,58 @@ const videoUrl = poem.data.video
   const modal = document.getElementById('video-modal');
   const backdrop = document.getElementById('video-modal-backdrop');
   const closeBtn = document.getElementById('video-modal-close');
-  const video = document.getElementById('video-el') as HTMLVideoElement;
+  const video = document.getElementById('video-el') as HTMLVideoElement & { _hls?: any };
 
   // Move modal to body to escape parent stacking contexts (e.g. main z-index:1)
   if (modal && modal.parentElement !== document.body) {
     document.body.appendChild(modal);
   }
 
-  function openModal() {
+  let attached = false;
+
+  async function attachVideo() {
+    if (attached || !video) return;
+    attached = true;
+    const hlsUrl = video.dataset.hls;
+    const mp4Url = video.dataset.mp4;
+
+    if (!hlsUrl) {
+      if (mp4Url) video.src = mp4Url;
+      return;
+    }
+
+    // Safari / iOS: native HLS, skip hls.js entirely.
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = hlsUrl;
+      return;
+    }
+
+    try {
+      const { default: Hls } = await import('hls.js');
+      if (Hls.isSupported()) {
+        const hls = new Hls({ maxBufferLength: 30 });
+        hls.loadSource(hlsUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal && mp4Url) {
+            hls.destroy();
+            video._hls = undefined;
+            video.src = mp4Url;
+          }
+        });
+        video._hls = hls;
+        return;
+      }
+    } catch (_) {
+      /* hls.js failed to load — fall back to MP4 */
+    }
+    if (mp4Url) video.src = mp4Url;
+  }
+
+  async function openModal() {
     modal?.classList.add('open');
-    video?.play();
+    await attachVideo();
+    video?.play().catch(() => { /* autoplay may be blocked; user can press play */ });
   }
 
   function closeModal() {

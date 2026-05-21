@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "astro": "^6.1.9",
-    "fuse.js": "^7.3.0"
+    "fuse.js": "^7.3.0",
+    "hls.js": "^1.6.16"
   }
 }
