@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # superpowers
 .superpowers/
+
+# video staging area (Edward's local upload buffer — copied into public/videos/ as needed)
+隐恕视频/
