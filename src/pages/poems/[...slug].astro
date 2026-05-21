@@ -29,6 +29,11 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
   month: 'long',
   day: 'numeric',
 });
+
+const VIDEO_CDN = 'https://cdn.jsdelivr.net/gh/edwardzyn1987/edwardzyn1987.github.io@main/public/videos';
+const videoUrl = poem.data.video
+  ? (import.meta.env.PROD ? `${VIDEO_CDN}/${poem.data.video}` : `/videos/${poem.data.video}`)
+  : null;
 ---
 
 <BaseLayout title={poem.data.title}>
@@ -87,7 +92,7 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
         <button class="video-modal-close" id="video-modal-close" aria-label="关闭">✕</button>
         <div class="video-modal-content">
           <video id="video-el" controls preload="none">
-            <source src={`/videos/${poem.data.video}`} type="video/mp4" />
+            <source src={videoUrl} type="video/mp4" />
           </video>
         </div>
       </div>
