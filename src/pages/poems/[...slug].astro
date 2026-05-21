@@ -32,7 +32,7 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
 
 const VIDEO_CDN = 'https://cdn.jsdelivr.net/gh/edwardzyn1987/edwardzyn1987.github.io@main/public/videos';
 const videoUrl = poem.data.video
-  ? (import.meta.env.PROD ? `${VIDEO_CDN}/${poem.data.video}` : `/videos/${poem.data.video}`)
+  ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodeURIComponent(poem.data.video)}` : `/videos/${poem.data.video}`)
   : null;
 ---
 
