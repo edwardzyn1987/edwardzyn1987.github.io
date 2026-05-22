@@ -384,8 +384,11 @@ const videoUrlMp4 = poem.data.video
       return;
     }
 
-    // Safari / iOS: native HLS, skip hls.js entirely.
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    // Safari / iOS: native HLS only (Chromium also returns truthy for canPlayType
+    // but cannot actually decode HLS playlists, so we must check UA).
+    const ua = navigator.userAgent;
+    const isSafari = /^((?!chrome|android|edg|firefox).)*safari/i.test(ua);
+    if (isSafari && video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = hlsUrl;
       return;
     }
