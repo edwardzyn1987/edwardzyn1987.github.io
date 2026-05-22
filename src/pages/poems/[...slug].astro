@@ -396,7 +396,18 @@ const videoUrlMp4 = poem.data.video
     try {
       const { default: Hls } = await import('hls.js');
       if (Hls.isSupported()) {
-        const hls = new Hls({ maxBufferLength: 30 });
+        const hls = new Hls({
+          // Aggressive buffering for short poetry videos (~60-90s).
+          // Goal: download whole video upfront after a few segments,
+          // so playback never stalls even if jsDelivr CDN has cache misses.
+          maxBufferLength: 60,           // target forward buffer (default 30)
+          maxMaxBufferLength: 600,       // hard cap (default 600) — allow whole-video buffering
+          maxBufferSize: 60 * 1000 * 1000, // 60MB cap (default 60MB)
+          backBufferLength: 30,          // keep 30s behind playhead (default 90, less is fine for short clips)
+          highBufferWatchdogPeriod: 1,   // check stall every 1s (default 2)
+          nudgeMaxRetry: 10,             // try harder to recover from stalls (default 3)
+          startFragPrefetch: true,       // prefetch first segment ASAP
+        });
         hls.loadSource(hlsUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.ERROR, (_event, data) => {
