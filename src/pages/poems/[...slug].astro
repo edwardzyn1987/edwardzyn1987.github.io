@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PoemNav from '../../components/PoemNav.astro';
 import { getCollection, render } from 'astro:content';
+import { createHash } from 'node:crypto';
 
 export async function getStaticPaths() {
   const poems = await getCollection('poems');
@@ -39,6 +40,13 @@ const videoUrlHls = videoBase
 const videoUrlMp4 = poem.data.video
   ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodeURIComponent(poem.data.video)}` : `/videos/${encodeURIComponent(poem.data.video)}`)
   : null;
+
+const COUNTER_NAMESPACE = 'edward-poetry';
+// CounterAPI key 必须 alphanumeric (含 `-`)，最多 100 字符。中文不可用。
+// 用 poem.id (如 `2024/七律-新茶`) 的 SHA-1 前 16 位做稳定派生 key：
+// 取前 16 位 hash 已远超唯一性需要（碰撞概率 ~10^-20）。
+// poem.id 是相对路径 slug，只要文件不重命名就稳定。
+const counterKey = 'p-' + createHash('sha1').update(poem.id).digest('hex').slice(0, 16);
 ---
 
 <BaseLayout title={poem.data.title}>
@@ -64,7 +72,12 @@ const videoUrlMp4 = poem.data.video
           </button>
         )}
       </div>
-      <p class="poem-meta">{poem.data.category} · {dateStr}</p>
+      <p class="poem-meta">
+        {poem.data.category} · {dateStr}
+        <span class="view-count" id="busuanzi_container_page_pv" style="display:none">
+          · 📖 阅读 <span id="busuanzi_value_page_pv">--</span> 次
+        </span>
+      </p>
       <div class="poem-divider"></div>
       <div class="poem-body">
         <Content />
@@ -150,6 +163,11 @@ const videoUrlMp4 = poem.data.video
     font-size: 14px;
     color: var(--color-text-muted);
     letter-spacing: 2px;
+  }
+
+  .view-count {
+    margin-left: 4px;
+    color: var(--color-text-muted);
   }
 
   .poem-divider {
@@ -446,4 +464,29 @@ const videoUrlMp4 = poem.data.video
       closeModal();
     }
   });
+</script>
+
+<!-- 不蒜子前台显示（按 location.pathname 自动分页计数） -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" is:inline></script>
+
+<!-- 显示控制 + CounterAPI 后台静默上报 -->
+<script define:vars={{ counterKey, COUNTER_NAMESPACE }}>
+  // 1.5s 后检查不蒜子是否回填了数字。回填了才显示「📖 阅读 N 次」整行；
+  // 不蒜子失败/被墙时整行保持隐藏，避免给用户看到 `--` 占位。
+  setTimeout(() => {
+    const span = document.getElementById('busuanzi_value_page_pv');
+    const wrap = document.getElementById('busuanzi_container_page_pv');
+    if (span && wrap) {
+      const txt = (span.textContent || '').trim();
+      if (txt && txt !== '--' && /^\d+$/.test(txt)) {
+        wrap.style.display = 'inline';
+      }
+    }
+  }, 1500);
+
+  // CounterAPI V1（匿名公共接口）累加：GET /up 触发 +1，无需 API key、无需 CORS 预检。
+  // V1 是 legacy 但稳定、完全匿名；V2 workspace 是私有的需 API key。
+  // 失败静默吞错——仅 Edward 后台数据缺失，用户无感知。
+  fetch(`https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${encodeURIComponent(counterKey)}/up`)
+    .catch(() => { /* silent */ });
 </script>
