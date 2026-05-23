@@ -74,8 +74,8 @@ const counterKey = 'p-' + createHash('sha1').update(poem.id).digest('hex').slice
       </div>
       <p class="poem-meta">
         {poem.data.category} · {dateStr}
-        <span class="view-count" id="busuanzi_container_page_pv" style="display:none">
-          · 📖 阅读 <span id="busuanzi_value_page_pv">--</span> 次
+        <span class="view-count" id="view-count-wrap" style="display:none">
+          · 📖 阅读 <span id="view-count-num">--</span> 次
         </span>
       </p>
       <div class="poem-divider"></div>
@@ -466,27 +466,20 @@ const counterKey = 'p-' + createHash('sha1').update(poem.id).digest('hex').slice
   });
 </script>
 
-<!-- 不蒜子前台显示（按 location.pathname 自动分页计数） -->
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" is:inline></script>
-
-<!-- 显示控制 + CounterAPI 后台静默上报 -->
+<!-- CounterAPI V1：每次访问 +1 并直接显示返回的累计数。
+     单源模式：手机/电脑/不同浏览器看到的数字始终一致（都来自 CounterAPI）。 -->
 <script define:vars={{ counterKey, COUNTER_NAMESPACE }}>
-  // 1.5s 后检查不蒜子是否回填了数字。回填了才显示「📖 阅读 N 次」整行；
-  // 不蒜子失败/被墙时整行保持隐藏，避免给用户看到 `--` 占位。
-  setTimeout(() => {
-    const span = document.getElementById('busuanzi_value_page_pv');
-    const wrap = document.getElementById('busuanzi_container_page_pv');
-    if (span && wrap) {
-      const txt = (span.textContent || '').trim();
-      if (txt && txt !== '--' && /^\d+$/.test(txt)) {
+  fetch(`https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${encodeURIComponent(counterKey)}/up`)
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      const count = data && typeof data.count === 'number' ? data.count : null;
+      if (count === null) return;
+      const num = document.getElementById('view-count-num');
+      const wrap = document.getElementById('view-count-wrap');
+      if (num && wrap) {
+        num.textContent = String(count);
         wrap.style.display = 'inline';
       }
-    }
-  }, 1500);
-
-  // CounterAPI V1（匿名公共接口）累加：GET /up 触发 +1，无需 API key、无需 CORS 预检。
-  // V1 是 legacy 但稳定、完全匿名；V2 workspace 是私有的需 API key。
-  // 失败静默吞错——仅 Edward 后台数据缺失，用户无感知。
-  fetch(`https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${encodeURIComponent(counterKey)}/up`)
-    .catch(() => { /* silent */ });
+    })
+    .catch(() => { /* CounterAPI 失败时整行保持隐藏，不显示 */ });
 </script>
