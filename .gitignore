@@ -28,3 +28,7 @@ pnpm-debug.log*
 
 # video staging area (Edward's local upload buffer — copied into public/videos/ as needed)
 隐恕视频/
+
+# python cache + temp scratch
+scripts/__pycache__/
+temp/
