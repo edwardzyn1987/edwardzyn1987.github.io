@@ -7,27 +7,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <h1 class="page-title">关 于</h1>
     <div class="page-divider"></div>
 
-    <section class="about-section">
-      <h2>作 者</h2>
-      <p>
-        此处填写你的个人介绍。可以写一段简短的自我描述，
-        你是谁，为什么写诗词，诗词对你意味着什么。
-      </p>
-    </section>
+    <figure class="author-photo">
+      <img src="/images/author.jpg" alt="作者照片" loading="lazy" />
+    </figure>
 
     <section class="about-section">
-      <h2>诗 词 观</h2>
+      <h2>作 者</h2>
+      <p class="meta-line">姓名：张坚　　号：隐恕</p>
+      <p class="meta-line">网名：究心悟道</p>
       <p>
-        此处填写你对诗词创作的理解和追求。
-        你的写作理念，偏好的风格，欣赏的古人诗词等。
+        祖籍姑苏，1955 年出生于上海。
+        兴趣颇广，乐于收藏、书画篆印，喜欢读书，尤其喜欢读古诗词。
+        闲吟之余，凭兴偶有诗词习作，作品散见于「诗词吾爱网」「中国诗歌网」及抖音、视频号、小红书等自媒体。
+        现居住于上海。
       </p>
     </section>
 
     <section class="about-section">
       <h2>联 系</h2>
-      <p>
-        如果你想与我交流诗词，欢迎在<a href="/guestbook">留言板</a>留言。
-      </p>
+      <p class="contact">nj1350@hotmail.com</p>
     </section>
   </main>
 </BaseLayout>
@@ -55,6 +53,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin: 20px auto 40px;
   }
 
+  .author-photo {
+    margin: 0 auto 40px;
+    text-align: center;
+  }
+
+  .author-photo img {
+    width: 200px;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
+
   .about-section {
     margin-bottom: 36px;
   }
@@ -65,6 +77,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     letter-spacing: 4px;
     font-weight: 600;
     margin-bottom: 12px;
+    text-align: center;
   }
 
   .about-section p {
@@ -74,8 +87,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     letter-spacing: 1px;
   }
 
+  .meta-line {
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .contact {
+    text-align: center;
+    letter-spacing: 2px;
+  }
+
   @media (max-width: 768px) {
     .about-page { padding: 30px 20px 60px; }
     .page-title { font-size: 28px; }
+    .author-photo img { width: 170px; }
   }
 </style>
