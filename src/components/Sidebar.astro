@@ -10,7 +10,7 @@ interface Props {
 const { currentCategory, currentTag, currentYear } = Astro.props;
 const poems = await getCollection('poems');
 
-const categories = ['五言绝句', '七言绝句', '五言律诗', '七言律诗', '五言古诗', '词'] as const;
+const categories = ['五言绝句', '七言绝句', '五言律诗', '七言律诗', '五言古诗', '词', '对联'] as const;
 const categoryCounts = new Map<string, number>();
 for (const poem of poems) {
   const cat = poem.data.category;

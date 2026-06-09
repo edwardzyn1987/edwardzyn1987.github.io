@@ -5,7 +5,7 @@ const poems = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/poems' }),
   schema: z.object({
     title: z.string(),
-    category: z.enum(['五言绝句', '七言绝句', '五言律诗', '七言律诗', '五言古诗', '词']),
+    category: z.enum(['五言绝句', '七言绝句', '五言律诗', '七言律诗', '五言古诗', '词', '对联']),
     tags: z.array(z.string()),
     date: z.coerce.date(),
     video: z.string().optional(),
