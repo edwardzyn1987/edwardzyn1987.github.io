@@ -29,6 +29,12 @@ pnpm-debug.log*
 # video staging area (Edward's local upload buffer — copied into public/videos/ as needed)
 隐恕视频/
 
+# recitation videos — served from separate repo edwardzyn1987/poetry-videos via jsDelivr CDN.
+# Kept on disk locally for `npm run dev` preview, but excluded from git + the deployed dist/
+# (GitHub Pages 1 GB limit). Generate HLS with scripts/segment_videos.py, then push the mp4 +
+# HLS folder to the poetry-videos repo — NOT here.
+public/videos/
+
 # python cache + temp scratch
 scripts/__pycache__/
 temp/
