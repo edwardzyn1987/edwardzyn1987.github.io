@@ -31,7 +31,7 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
   day: 'numeric',
 });
 
-const VIDEO_CDN = 'https://cdn.jsdelivr.net/gh/edwardzyn1987/poetry-videos@main/videos';
+const VIDEO_CDN = 'https://cdn.jsdelivr.net/gh/edwardzyn1987/poetry-videos@v2/videos';
 const videoBase = poem.data.video?.replace(/\.mp4$/, '');
 const encodedBase = videoBase ? encodeURIComponent(videoBase) : '';
 const videoUrlHls = videoBase
