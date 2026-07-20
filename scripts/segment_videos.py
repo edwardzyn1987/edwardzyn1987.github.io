@@ -108,10 +108,18 @@ def run_hls_copy(mp4: Path, out_dir: Path) -> bool:
 
 
 def run_hls_reencode(mp4: Path, out_dir: Path) -> None:
+    # Capped-CRF (constrained quality): CRF drives quality, maxrate hard-caps the
+    # bitrate so uneven/high-motion segments can't balloon. This replaced the old
+    # bare "-crf 18" which produced 4-6 MB segments that stalled playback over the
+    # CDN. -force_key_frames places a keyframe exactly every SEGMENT_SECONDS so the
+    # HLS splitter aligns cleanly even on fractional-fps sources (25.1, 24.7, …),
+    # which the old fixed "-g 48" could not. Audio is stream-copied (sources are
+    # already AAC ~100 kbps — re-encoding would add loss for nothing).
     cmd = [
         "ffmpeg", "-y", "-i", str(mp4),
-        "-c:v", "libx264", "-crf", "18", "-preset", "medium",
-        "-g", "48", "-keyint_min", "48", "-sc_threshold", "0",
+        "-c:v", "libx264", "-crf", "23",
+        "-maxrate", "1500k", "-bufsize", "3000k", "-preset", "medium",
+        "-force_key_frames", f"expr:gte(t,n_forced*{SEGMENT_SECONDS})",
         "-c:a", "copy",
         "-hls_time", str(SEGMENT_SECONDS),
         "-hls_segment_type", "mpegts",
@@ -130,12 +138,12 @@ def segment_count(d: Path) -> int:
     return sum(1 for f in d.glob("seg*.ts"))
 
 
-def segment_one(mp4: Path) -> dict:
+def segment_one(mp4: Path, force: bool = False) -> dict:
     basename = mp4.stem
     out_dir = VIDEOS_DIR / basename
     playlist = out_dir / "playlist.m3u8"
 
-    if playlist.exists():
+    if playlist.exists() and not force:
         return {
             "name": basename,
             "mode": "skipped",
@@ -144,6 +152,8 @@ def segment_one(mp4: Path) -> dict:
         }
 
     out_dir.mkdir(parents=True, exist_ok=True)
+    if force:
+        clear_dir(out_dir)  # re-segment from scratch: drop old segments + playlist
 
     duration = media_duration(mp4)
     keyframes = ffprobe_keyframe_times(mp4)
@@ -167,6 +177,14 @@ def segment_one(mp4: Path) -> dict:
 
 
 def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser(description="Segment public/videos/*.mp4 into HLS.")
+    parser.add_argument("--force", action="store_true",
+                        help="Re-segment even if playlist.m3u8 already exists (clears the folder first).")
+    parser.add_argument("--only", metavar="FILE",
+                        help="Restrict to the video basenames listed (one per line) in FILE.")
+    args = parser.parse_args()
+
     require_tool("ffmpeg")
     require_tool("ffprobe")
 
@@ -177,13 +195,24 @@ def main() -> None:
     if not mp4s:
         sys.exit("No .mp4 files found in public/videos/")
 
-    print(f"Found {len(mp4s)} .mp4 files. Output dir: {VIDEOS_DIR}\n")
+    if args.only:
+        # splitlines() handles CRLF/LF/CR — do NOT use split("\n") (leaves \r → no match).
+        wanted = {line.strip() for line in Path(args.only).read_text(encoding="utf-8").splitlines() if line.strip()}
+        mp4s = [m for m in mp4s if m.stem in wanted]
+        missing = wanted - {m.stem for m in mp4s}
+        print(f"--only: {len(wanted)} names requested, {len(mp4s)} matched"
+              + (f", {len(missing)} not found: {sorted(missing)[:3]}…" if missing else ""))
+        if not mp4s:
+            sys.exit("ERROR: --only matched no videos (check names / CRLF).")
+
+    print(f"Processing {len(mp4s)} .mp4 files. Output dir: {VIDEOS_DIR}"
+          + (" [--force]" if args.force else "") + "\n")
 
     rows: list[dict] = []
     for i, mp4 in enumerate(mp4s, 1):
         print(f"[{i}/{len(mp4s)}] {mp4.name} ... ", end="", flush=True)
         try:
-            row = segment_one(mp4)
+            row = segment_one(mp4, force=args.force)
             print(f"{row['mode']:8} segments={row['segments']:3} size={row['size_mb']:6.2f} MB")
         except subprocess.CalledProcessError as e:
             print("FAILED")

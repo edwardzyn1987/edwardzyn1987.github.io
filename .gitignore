@@ -38,3 +38,6 @@ public/videos/
 # python cache + temp scratch
 scripts/__pycache__/
 temp/
+
+# one-off re-encode target lists for segment_videos.py --only (scratch, keep local)
+.reencode_targets.txt
