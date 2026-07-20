@@ -24,6 +24,17 @@ const { title, description = '古体诗词个人展示' } = Astro.props;
   </body>
 </html>
 
+<!-- 全站访问量（UV 近似）：每会话首次访问任意页面 → site-uv +1。
+     不读取、不显示返回值——数字只在「关于」页密码 modal 内呈现。
+     sessionStorage 去重：同一标签页会话只 +1；标记仅在成功后设，失败留待下次导航重试。 -->
+<script>
+  if (!sessionStorage.getItem('uv-counted')) {
+    fetch('https://api.counterapi.dev/v1/edward-poetry/site-uv/up')
+      .then((r) => { if (r.ok) sessionStorage.setItem('uv-counted', '1'); })
+      .catch(() => { /* 静默失败，不设标记 → 下次导航重试 */ });
+  }
+</script>
+
 <style is:global>
   @import '../styles/global.css';
 </style>

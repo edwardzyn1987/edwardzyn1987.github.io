@@ -27,6 +27,37 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h2>联 系</h2>
       <p class="contact">nj1350@hotmail.com</p>
     </section>
+
+    <!-- 隐藏访问统计入口：低调小字，点击弹出密码 modal -->
+    <div class="stat-entry">
+      <button class="stat-btn" id="stat-btn" type="button">· 访问统计 ·</button>
+    </div>
+
+    <div class="stat-modal" id="stat-modal">
+      <div class="stat-modal-backdrop" id="stat-modal-backdrop"></div>
+      <div class="stat-modal-content">
+        <button class="stat-modal-close" id="stat-modal-close" aria-label="关闭">✕</button>
+
+        <div class="stat-view" id="stat-view-input">
+          <p class="stat-modal-title">请输入密码</p>
+          <input
+            class="stat-input"
+            id="stat-input"
+            type="password"
+            inputmode="numeric"
+            autocomplete="off"
+            aria-label="密码"
+          />
+          <p class="stat-error" id="stat-error"></p>
+          <button class="stat-submit" id="stat-submit" type="button">确定</button>
+        </div>
+
+        <div class="stat-view" id="stat-view-result" style="display:none">
+          <p class="stat-modal-title">访问统计</p>
+          <p class="stat-number">全站访问量 <span id="stat-number-num">--</span> 次</p>
+        </div>
+      </div>
+    </div>
   </main>
 </BaseLayout>
 
@@ -97,9 +128,222 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     letter-spacing: 2px;
   }
 
+  /* 隐藏访问统计入口 — 低调页脚风 */
+  .stat-entry {
+    margin-top: 48px;
+    text-align: center;
+  }
+
+  .stat-btn {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    opacity: 0.35;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    font-family: inherit;
+  }
+
+  .stat-btn:hover {
+    opacity: 0.7;
+  }
+
+  /* 密码 modal — 复用视频 modal 的开合模式 */
+  .stat-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-modal.open {
+    display: flex;
+  }
+
+  .stat-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .stat-modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 340px;
+    background: var(--color-bg, #fff);
+    border-radius: 12px;
+    padding: 36px 28px 28px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+  }
+
+  .stat-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+  }
+
+  .stat-modal-close:hover {
+    color: var(--color-primary);
+  }
+
+  .stat-modal-title {
+    font-size: 15px;
+    color: var(--color-primary);
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+  }
+
+  .stat-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    font-size: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    text-align: center;
+    letter-spacing: 4px;
+    outline: none;
+  }
+
+  .stat-input:focus {
+    border-color: var(--color-primary);
+  }
+
+  .stat-error {
+    min-height: 18px;
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: #c0392b;
+    letter-spacing: 1px;
+  }
+
+  .stat-submit {
+    margin-top: 12px;
+    padding: 8px 28px;
+    font-size: 14px;
+    color: #fff;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 6px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.2s;
+  }
+
+  .stat-submit:hover {
+    opacity: 0.88;
+  }
+
+  .stat-number {
+    font-size: 18px;
+    color: var(--color-text-title);
+    letter-spacing: 2px;
+    margin: 8px 0 0;
+  }
+
+  .stat-number span {
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
   @media (max-width: 768px) {
     .about-page { padding: 30px 20px 60px; }
     .page-title { font-size: 28px; }
     .author-photo img { width: 170px; }
   }
 </style>
+
+<!-- 访问统计 modal：密码校验（客户端轻量遮蔽）→ 裸读 site-uv（不 +1）→ 显示数字。 -->
+<script>
+  const PW = '12345678'; // 轻量遮蔽：客户端明文，仅挡随手点的访客
+
+  const btn = document.getElementById('stat-btn');
+  const modal = document.getElementById('stat-modal');
+  const backdrop = document.getElementById('stat-modal-backdrop');
+  const closeBtn = document.getElementById('stat-modal-close');
+  const input = document.getElementById('stat-input') as HTMLInputElement | null;
+  const submit = document.getElementById('stat-submit');
+  const errorEl = document.getElementById('stat-error');
+  const viewInput = document.getElementById('stat-view-input');
+  const viewResult = document.getElementById('stat-view-result');
+  const numEl = document.getElementById('stat-number-num');
+
+  // 移到 body，脱离 main 的 stacking context（与视频 modal 同样处理）
+  if (modal && modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
+
+  function openModal() {
+    modal?.classList.add('open');
+    // 重置为输入态
+    if (viewInput) viewInput.style.display = '';
+    if (viewResult) viewResult.style.display = 'none';
+    if (errorEl) errorEl.textContent = '';
+    if (input) { input.value = ''; setTimeout(() => input.focus(), 50); }
+  }
+
+  function closeModal() {
+    modal?.classList.remove('open');
+    if (input) input.value = '';
+    if (errorEl) errorEl.textContent = '';
+  }
+
+  function verify() {
+    if (!input) return;
+    if (input.value !== PW) {
+      if (errorEl) errorEl.textContent = '密码错误';
+      input.select();
+      return;
+    }
+    // 密码正确 → 裸读 site-uv（不 +1）
+    if (viewInput) viewInput.style.display = 'none';
+    if (viewResult) viewResult.style.display = '';
+    if (numEl) numEl.textContent = '--';
+    fetch('https://api.counterapi.dev/v1/edward-poetry/site-uv/')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const count = data && typeof data.count === 'number' ? data.count : null;
+        if (numEl) numEl.textContent = count === null ? '0' : count.toLocaleString();
+      })
+      .catch(() => { if (numEl) numEl.textContent = '—'; });
+  }
+
+  btn?.addEventListener('click', openModal);
+  backdrop?.addEventListener('click', closeModal);
+  closeBtn?.addEventListener('click', closeModal);
+  submit?.addEventListener('click', verify);
+  input?.addEventListener('keydown', (e) => {
+    if ((e as KeyboardEvent).key === 'Enter') verify();
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e as KeyboardEvent).key === 'Escape' && modal?.classList.contains('open')) {
+      closeModal();
+    }
+  });
+</script>
