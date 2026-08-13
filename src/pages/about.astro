@@ -279,7 +279,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 </style>
 
-<!-- 访问统计 modal：密码校验（客户端轻量遮蔽）→ 裸读 site-uv（不 +1）→ 显示数字。 -->
+<!-- 访问统计 modal：密码校验（客户端轻量遮蔽）→ 读 GoatCounter 全站总访问量（TOTAL，不 +1）→ 显示数字。 -->
 <script>
   const PW = '12345678'; // 轻量遮蔽：客户端明文，仅挡随手点的访客
 
@@ -321,15 +321,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       input.select();
       return;
     }
-    // 密码正确 → 裸读 site-uv（不 +1）
+    // 密码正确 → 读 GoatCounter 全站总访问量（TOTAL = 所有路径合计，不 +1）
     if (viewInput) viewInput.style.display = 'none';
     if (viewResult) viewResult.style.display = '';
     if (numEl) numEl.textContent = '--';
-    fetch('https://api.counterapi.dev/v1/edward-poetry/site-uv/')
+    fetch('https://edwardpoetry.goatcounter.com/counter/TOTAL.json')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        const count = data && typeof data.count === 'number' ? data.count : null;
-        if (numEl) numEl.textContent = count === null ? '0' : count.toLocaleString();
+        // GoatCounter count 是字符串；用 count（总 PV），无数据则显示 0
+        const count = data && data.count != null ? parseInt(data.count, 10) : null;
+        if (numEl) numEl.textContent = count === null || isNaN(count) ? '0' : count.toLocaleString();
       })
       .catch(() => { if (numEl) numEl.textContent = '—'; });
   }

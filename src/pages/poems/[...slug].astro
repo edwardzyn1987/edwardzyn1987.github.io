@@ -2,7 +2,6 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PoemNav from '../../components/PoemNav.astro';
 import { getCollection, render } from 'astro:content';
-import { createHash } from 'node:crypto';
 
 export async function getStaticPaths() {
   const poems = await getCollection('poems');
@@ -41,12 +40,10 @@ const videoUrlMp4 = poem.data.video
   ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodeURIComponent(poem.data.video)}` : `/videos/${encodeURIComponent(poem.data.video)}`)
   : null;
 
-const COUNTER_NAMESPACE = 'edward-poetry';
-// CounterAPI key 必须 alphanumeric (含 `-`)，最多 100 字符。中文不可用。
-// 用 poem.id (如 `2024/七律-新茶`) 的 SHA-1 前 16 位做稳定派生 key：
-// 取前 16 位 hash 已远超唯一性需要（碰撞概率 ~10^-20）。
-// poem.id 是相对路径 slug，只要文件不重命名就稳定。
-const counterKey = 'p-' + createHash('sha1').update(poem.id).digest('hex').slice(0, 16);
+// 阅读数数据源 = GoatCounter（埋点在 BaseLayout）。
+// 本页 count 按 URL 路径统计：运行时直接读 location.pathname，
+// 保证读回路径与 count.js 记录的路径逐字一致（含 trailing slash）。
+const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
 ---
 
 <BaseLayout title={poem.data.title}>
@@ -466,20 +463,26 @@ const counterKey = 'p-' + createHash('sha1').update(poem.id).digest('hex').slice
   });
 </script>
 
-<!-- CounterAPI V1：每次访问 +1 并直接显示返回的累计数。
-     单源模式：手机/电脑/不同浏览器看到的数字始终一致（都来自 CounterAPI）。 -->
-<script define:vars={{ counterKey, COUNTER_NAMESPACE }}>
-  fetch(`https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${encodeURIComponent(counterKey)}/up`)
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      const count = data && typeof data.count === 'number' ? data.count : null;
-      if (count === null) return;
-      const num = document.getElementById('view-count-num');
-      const wrap = document.getElementById('view-count-wrap');
-      if (num && wrap) {
-        num.textContent = String(count);
-        wrap.style.display = 'inline';
-      }
-    })
-    .catch(() => { /* CounterAPI 失败时整行保持隐藏，不显示 */ });
+<!-- GoatCounter 阅读数：读回本页路径的累计访问数并显示。
+     count.js 按 location.pathname 埋点，这里读 /counter/<同一路径>.json。
+     GoatCounter 有缓存缓冲，新访问后数字可能延迟数秒刷新；count 字段是字符串。
+     无数据时接口返回 404 + {"count":"0"}，此时保持隐藏不显示 0。 -->
+<script define:vars={{ GOATCOUNTER }}>
+  (function () {
+    var path = location.pathname; // 与 count.js 记录的路径逐字一致
+    var url = GOATCOUNTER + '/counter/' + encodeURIComponent(path) + '.json';
+    fetch(url)
+      .then(function (r) { return r.ok ? r.json() : null; }) // 404(无数据) → null → 保持隐藏
+      .then(function (data) {
+        var count = data && data.count != null ? parseInt(data.count, 10) : null;
+        if (count === null || isNaN(count) || count <= 0) return;
+        var num = document.getElementById('view-count-num');
+        var wrap = document.getElementById('view-count-wrap');
+        if (num && wrap) {
+          num.textContent = String(count);
+          wrap.style.display = 'inline';
+        }
+      })
+      .catch(function () { /* 失败时整行保持隐藏，不显示 */ });
+  })();
 </script>
