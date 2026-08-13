@@ -25,7 +25,7 @@ const { title, description = '古体诗词个人展示' } = Astro.props;
 </html>
 
 <!-- 全站访问统计：GoatCounter 埋点脚本（自动记录每次页面访问的 PV/UV）。
-     数据源统一为 GoatCounter：诗页读回本页阅读数、「关于」页读回全站总数，都来自这里的埋点。
+     每个页面访问都上报到 GoatCounter；「关于」页密码 modal 读回全站总数（TOTAL）呈现。
      count.js 自动按 location.pathname 记录，无需手动去重；本地 dev 环境不发送（allow_local 未开）。 -->
 <script
   data-goatcounter="https://edwardpoetry.goatcounter.com/count"

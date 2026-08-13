@@ -39,11 +39,6 @@ const videoUrlHls = videoBase
 const videoUrlMp4 = poem.data.video
   ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodeURIComponent(poem.data.video)}` : `/videos/${encodeURIComponent(poem.data.video)}`)
   : null;
-
-// 阅读数数据源 = GoatCounter（埋点在 BaseLayout）。
-// 本页 count 按 URL 路径统计：运行时直接读 location.pathname，
-// 保证读回路径与 count.js 记录的路径逐字一致（含 trailing slash）。
-const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
 ---
 
 <BaseLayout title={poem.data.title}>
@@ -71,9 +66,6 @@ const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
       </div>
       <p class="poem-meta">
         {poem.data.category} · {dateStr}
-        <span class="view-count" id="view-count-wrap" style="display:none">
-          · 📖 阅读 <span id="view-count-num">--</span> 次
-        </span>
       </p>
       <div class="poem-divider"></div>
       <div class="poem-body">
@@ -160,11 +152,6 @@ const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
     font-size: 14px;
     color: var(--color-text-muted);
     letter-spacing: 2px;
-  }
-
-  .view-count {
-    margin-left: 4px;
-    color: var(--color-text-muted);
   }
 
   .poem-divider {
@@ -463,26 +450,3 @@ const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
   });
 </script>
 
-<!-- GoatCounter 阅读数：读回本页路径的累计访问数并显示。
-     count.js 按 location.pathname 埋点，这里读 /counter/<同一路径>.json。
-     GoatCounter 有缓存缓冲，新访问后数字可能延迟数秒刷新；count 字段是字符串。
-     无数据时接口返回 404 + {"count":"0"}，此时保持隐藏不显示 0。 -->
-<script define:vars={{ GOATCOUNTER }}>
-  (function () {
-    var path = location.pathname; // 与 count.js 记录的路径逐字一致
-    var url = GOATCOUNTER + '/counter/' + encodeURIComponent(path) + '.json';
-    fetch(url)
-      .then(function (r) { return r.ok ? r.json() : null; }) // 404(无数据) → null → 保持隐藏
-      .then(function (data) {
-        var count = data && data.count != null ? parseInt(data.count, 10) : null;
-        if (count === null || isNaN(count) || count <= 0) return;
-        var num = document.getElementById('view-count-num');
-        var wrap = document.getElementById('view-count-wrap');
-        if (num && wrap) {
-          num.textContent = String(count);
-          wrap.style.display = 'inline';
-        }
-      })
-      .catch(function () { /* 失败时整行保持隐藏，不显示 */ });
-  })();
-</script>
