@@ -26,11 +26,14 @@ const { title, description = '古体诗词个人展示' } = Astro.props;
 
 <!-- 全站访问统计：GoatCounter 埋点脚本（自动记录每次页面访问的 PV/UV）。
      每个页面访问都上报到 GoatCounter；「关于」页密码 modal 读回全站总数（TOTAL）呈现。
-     count.js 自动按 location.pathname 记录，无需手动去重；本地 dev 环境不发送（allow_local 未开）。 -->
+     count.js 自动按 location.pathname 记录，无需手动去重；本地 dev 环境不发送（allow_local 未开）。
+     ⚠️ 自托管 count.js（/count.js，同源）：公共 CDN gc.zgo.at 在国内网络会 ERR_CONNECTION_TIMED_OUT，
+     脚本加载不了则埋点从不发出、计数永远 0。同源脚本必然可加载，绕过 gc.zgo.at。
+     上报端点仍是 edwardpoetry.goatcounter.com/count（data-goatcounter），/count 官方保证向后兼容。 -->
 <script
   data-goatcounter="https://edwardpoetry.goatcounter.com/count"
   async
-  src="//gc.zgo.at/count.js"></script>
+  src="/count.js"></script>
 
 <style is:global>
   @import '../styles/global.css';
