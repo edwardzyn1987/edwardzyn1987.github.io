@@ -54,10 +54,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
         <div class="stat-view" id="stat-view-result" style="display:none">
           <p class="stat-modal-title">访问统计</p>
-          <!-- GoatCounter 实时全站访问量：verify() 里注入 TOTAL.html 的 iframe。
-               用 .html（实时）而非 .json（有 4 小时缓存，永远显示旧值）。
-               iframe 绕过 CORS（.html 无 CORS 头，fetch 读不了，只能嵌）。 -->
-          <div class="stat-counter-mount" id="stat-counter-mount"></div>
+          <p class="stat-number">全站访问量 <span id="stat-number-num">--</span> 次</p>
         </div>
       </div>
     </div>
@@ -263,12 +260,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     opacity: 0.88;
   }
 
-  .stat-counter-mount {
-    margin: 12px 0 0;
-    min-height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .stat-number {
+    font-size: 18px;
+    color: var(--color-text-title);
+    letter-spacing: 2px;
+    margin: 8px 0 0;
+  }
+
+  .stat-number span {
+    font-weight: 600;
+    color: var(--color-primary);
   }
 
   @media (max-width: 768px) {
@@ -291,7 +292,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const errorEl = document.getElementById('stat-error');
   const viewInput = document.getElementById('stat-view-input');
   const viewResult = document.getElementById('stat-view-result');
-  const counterMount = document.getElementById('stat-counter-mount');
+  const numEl = document.getElementById('stat-number-num');
 
   // 移到 body，脱离 main 的 stacking context（与视频 modal 同样处理）
   if (modal && modal.parentElement !== document.body) {
@@ -320,22 +321,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       input.select();
       return;
     }
-    // 密码正确 → 注入 GoatCounter 实时全站访问量 iframe（TOTAL.html）
+    // 密码正确 → 读 GoatCounter 全站实时访问量并渲染成中文
     if (viewInput) viewInput.style.display = 'none';
     if (viewResult) viewResult.style.display = '';
-    if (counterMount && !counterMount.querySelector('iframe')) {
-      // TOTAL.html 是实时值（.json 有 4h 缓存永远显示旧值）；iframe 嵌入绕过 CORS。
-      // style 参数定制配色以贴合页面；no_branding 去掉 "stats by GoatCounter" 页脚。
-      const style = encodeURIComponent('#gcvc-views{font-size:28px} #gcvc-for{font-size:15px} body{color:#9a5a15}');
-      const iframe = document.createElement('iframe');
-      iframe.src = 'https://edwardpoetry.goatcounter.com/counter/TOTAL.html?no_branding=1&style=' + style;
-      iframe.width = '200';
-      iframe.height = '60';
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('scrolling', 'no');
-      iframe.style.cssText = 'border:0;margin:0 auto;display:block;color-scheme:light;';
-      counterMount.appendChild(iframe);
-    }
+    if (numEl) numEl.textContent = '--';
+    // ⚠️ 必须带 start 参数：不带参数的 TOTAL.json 有最长 4h 服务端缓存（永远返回旧值 0）；
+    //    带 start 改变缓存 key → 返回实时值。start 用足够早的固定日期涵盖全部历史
+    //    （站点 2026 才建）。.json 有 CORS（Allow-Origin: *）可跨域 fetch 拿纯数字。
+    fetch('https://edwardpoetry.goatcounter.com/counter/TOTAL.json?start=2020-01-01')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        // GoatCounter count 是字符串
+        const count = data && data.count != null ? parseInt(data.count, 10) : null;
+        if (numEl) numEl.textContent = count === null || isNaN(count) ? '0' : count.toLocaleString();
+      })
+      .catch(() => { if (numEl) numEl.textContent = '—'; });
   }
 
   btn?.addEventListener('click', openModal);
