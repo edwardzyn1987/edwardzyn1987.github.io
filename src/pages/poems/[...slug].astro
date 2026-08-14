@@ -39,6 +39,11 @@ const videoUrlHls = videoBase
 const videoUrlMp4 = poem.data.video
   ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodeURIComponent(poem.data.video)}` : `/videos/${encodeURIComponent(poem.data.video)}`)
   : null;
+
+// 阅读数数据源 = GoatCounter（埋点在 BaseLayout）。
+// 本页 count 按 URL 路径统计：运行时直接读 location.pathname，
+// 保证读回路径与 count.js 记录的路径逐字一致（含 trailing slash）。
+const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
 ---
 
 <BaseLayout title={poem.data.title}>
@@ -66,6 +71,9 @@ const videoUrlMp4 = poem.data.video
       </div>
       <p class="poem-meta">
         {poem.data.category} · {dateStr}
+        <span class="view-count" id="view-count-wrap">
+          · 📖 阅读 <span id="view-count-num">--</span> 次
+        </span>
       </p>
       <div class="poem-divider"></div>
       <div class="poem-body">
@@ -152,6 +160,11 @@ const videoUrlMp4 = poem.data.video
     font-size: 14px;
     color: var(--color-text-muted);
     letter-spacing: 2px;
+  }
+
+  .view-count {
+    margin-left: 4px;
+    color: var(--color-text-muted);
   }
 
   .poem-divider {
@@ -449,4 +462,26 @@ const videoUrlMp4 = poem.data.video
     }
   });
 </script>
+
+<!-- GoatCounter 阅读数：读回本页路径的累计访问数并显示。
+     count.js 按 location.pathname 埋点，这里读 /counter/<同一路径>.json。
+     ⚠️ 必须带 ?start= 参数：不带参数的 /counter/*.json 有最长 4h 服务端缓存
+        （关于页 TOTAL 曾因此永远显示旧值 0，见 about.astro）。带 start 破缓存拿实时值。
+     无数据时接口返回 {"count":"0"}（或 404）→ 显示「阅读 0 次」（0 也显示，不隐藏）。 -->
+<script define:vars={{ GOATCOUNTER }}>
+  (function () {
+    var path = location.pathname; // 与 count.js 记录的路径逐字一致
+    var url = GOATCOUNTER + '/counter/' + encodeURIComponent(path) + '.json?start=2020-01-01';
+    var num = document.getElementById('view-count-num');
+    fetch(url)
+      .then(function (r) { return r.ok ? r.json() : null; }) // 404(无数据) → null → 显示 0
+      .then(function (data) {
+        var count = data && data.count != null ? parseInt(data.count, 10) : 0;
+        if (isNaN(count) || count < 0) count = 0;
+        if (num) num.textContent = String(count);
+      })
+      .catch(function () { if (num) num.textContent = '0'; }); // 失败也落到 0，不留占位符
+  })();
+</script>
+
 
