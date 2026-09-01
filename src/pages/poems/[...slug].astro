@@ -30,7 +30,12 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
   day: 'numeric',
 });
 
-const VIDEO_CDN = 'https://cdn.jsdelivr.net/gh/edwardzyn1987/poetry-videos@v7/videos';
+// 视频 CDN base，按构建目标切换：
+//   - 默认（GitHub Pages 主站）：jsDelivr。改 poetry-videos tag 时 bump @vN，见 reference_poetry_video_repo。
+//   - 国内镜像（阿里云 OSS+CDN）：构建时设 PUBLIC_VIDEO_CDN=https://<阿里云CDN域名>/videos（见 npm run build:cn）。
+// 不设环境变量时构建产物与主站逐字节一致——不破坏现有 GitHub 发布流程。
+const VIDEO_CDN = import.meta.env.PUBLIC_VIDEO_CDN
+  || 'https://cdn.jsdelivr.net/gh/edwardzyn1987/poetry-videos@v8/videos';
 const videoBase = poem.data.video?.replace(/\.mp4$/, '');
 const encodedBase = videoBase ? encodeURIComponent(videoBase) : '';
 const videoUrlHls = videoBase
