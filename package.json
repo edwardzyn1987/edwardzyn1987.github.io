@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:cn": "cross-env PUBLIC_VIDEO_CDN=https://REPLACE-WITH-ALIYUN-CDN-DOMAIN/videos astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -15,5 +16,8 @@
     "astro": "^6.1.9",
     "fuse.js": "^7.3.0",
     "hls.js": "^1.6.16"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }
