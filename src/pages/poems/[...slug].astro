@@ -35,7 +35,7 @@ const dateStr = poem.data.date.toLocaleDateString('zh-CN', {
 //   - 国内镜像（阿里云 OSS+CDN）：构建时设 PUBLIC_VIDEO_CDN=https://<阿里云CDN域名>/videos（见 npm run build:cn）。
 // 不设环境变量时构建产物与主站逐字节一致——不破坏现有 GitHub 发布流程。
 const VIDEO_CDN = import.meta.env.PUBLIC_VIDEO_CDN
-  || 'https://cdn.jsdelivr.net/gh/edwardzyn1987/poetry-videos@v10/videos';
+  || 'https://cdn.jsdelivr.net/gh/edwardzyn1987/poetry-videos@v11/videos';
 const videoBase = poem.data.video?.replace(/\.mp4$/, '');
 const encodedBase = videoBase ? encodeURIComponent(videoBase) : '';
 const videoUrlHls = videoBase
