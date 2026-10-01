@@ -186,7 +186,15 @@ build 时:
 ## 9. 范围红线
 
 **新增**: `src/components/AnthologyToday.astro`、`src/pages/anthology-today.astro`。
-**修改**: `src/components/Header.astro`（navItems 加 1 项）、`src/pages/index.astro`（加 1 import + 1 段 section + 修复 line 61 `hasAudio`→`hasVideo` 既有 bug）。
-**不碰**: 诗歌 `.md`、`content.config.ts` schema、视频/CDN、其他页面逻辑、`Sidebar.astro`、`PoemCard.astro`、`[...slug].astro` 路由、`Header.astro` 的 mobile 汉堡 script（新增项自动被 toggle 纳入，无需改）。
+**修改**:
+- `src/components/Header.astro`（navItems 加 1 项）
+- `src/pages/index.astro`（加 1 import + 1 段 section + 修复 line 61 `hasAudio`→`hasVideo` 既有 bug）
+- **`src/styles/global.css`**（新增 `.poem-card*` 全局样式块——见下）
+- **`src/components/PoemCard.astro`**（从 scoped `<style>` 移除 `.poem-card*` 规则，样式改由 global.css 提供）
+
+**治本：卡片样式全局化（审阅发现的必要扩项）**: 现状 `.poem-card*` 样式在 PoemCard.astro 的 scoped `<style>`，编译成 `.poem-card[data-astro-cid-xxx]` 带属性限定。JS 用 innerHTML 注入的卡片节点无此 cid 属性 → 样式不命中。**后果（既有 bug）**: `poems.astro` 侧栏筛选触发 JS 重渲染后，卡片塌成几乎无样式的文本块（丢左边框/内边距/背景/hover，标题摘要日期字号颜色全失），只剩全局 `.tag` pill。首屏静态卡片正常、一筛选就坏。
+**解法**: 把 `.poem-card / -header / -title / -excerpt / -footer / -tags / -date / .video-badge` 整组样式从 `PoemCard.astro:36-93` 移到 `global.css`（裸选择器、全局）。这样 PoemCard 组件、poems.astro 的 JS 卡片、新 AnthologyToday 的 JS 卡片三者**同时正确**，并一次性修掉 poems 页筛选塌样式的既有 bug。变量 `var(--color-*)` 都在 `global.css :root` 已定义，移动后正常解析。AnthologyToday 的 JS 注入卡片因此无需自带样式。
+
+**不碰**: 诗歌 `.md`、`content.config.ts` schema、视频/CDN、`Sidebar.astro`、`[...slug].astro` 路由、`Header.astro` 的 mobile 汉堡 script（新增项自动被 toggle 纳入，无需改）、`poems.astro`（样式全局化后其 JS 卡片自动修复，无需改它）。
 
 部署沿用现有 `poetry_website_upload` skill 的 build→commit→push→Playwright 验证流程。
