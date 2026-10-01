@@ -135,7 +135,16 @@ const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
     let picks = pickPerYear(data, tMonth, tDay);
     const mode = (window as any).__ANTHOLOGY_MODE__ ?? 'full';
     const homeLimit = (window as any).__ANTHOLOGY_HOME_LIMIT__ ?? 3;
-    if (mode === 'home') picks = picks.slice(0, homeLimit);
+    if (mode === 'home') {
+      // 按"前 N 年"截断（非前 N 张卡片）：某年当天多首时整年保留，不被切散。
+      const keptYears: number[] = [];
+      picks = picks.filter(p => {
+        if (keptYears.includes(p.entry.year)) return true;
+        if (keptYears.length >= homeLimit) return false;
+        keptYears.push(p.entry.year);
+        return true;
+      });
+    }
 
     placeholder?.remove();
     if (picks.length === 0) {
