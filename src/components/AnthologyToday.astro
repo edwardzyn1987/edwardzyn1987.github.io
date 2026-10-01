@@ -1,0 +1,177 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  mode: 'home' | 'full';
+}
+const { mode } = Astro.props;
+
+const poems = await getCollection('poems');
+
+function getExcerpt(body: string): string {
+  const lines = body.trim().split('\n').filter(l => l.trim());
+  return lines.slice(0, 2).join('');
+}
+
+// 序列化：month/day 用 UTC 拆成整数（消除本地时区 off-by-one）；id 含年份前缀
+const anthologyData = poems.map(poem => ({
+  id: poem.id,                                   // 含年份，如 "2024/七律-中秋片影"
+  title: poem.data.title,
+  category: poem.data.category,
+  tags: poem.data.tags,
+  year: poem.data.date.getUTCFullYear(),
+  month: poem.data.date.getUTCMonth() + 1,
+  day: poem.data.date.getUTCDate(),
+  dateISO: poem.data.date.toISOString(),
+  hasVideo: !!poem.data.video,
+  excerpt: getExcerpt(poem.body ?? ''),
+}));
+
+const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
+---
+
+<section class="section anthology">
+  <div class="anthology-head">
+    <h2 class="section-title">昨 日 今 朝</h2>
+    {mode === 'home' && <a class="anthology-more" href="/anthology-today">查看全部 →</a>}
+  </div>
+  <div class="poem-list" id="anthology-list">
+    <p class="anthology-placeholder" id="anthology-placeholder">正在为您寻回往年今日…</p>
+  </div>
+</section>
+
+<template id="anthology-data" set:text={JSON.stringify(anthologyData)}></template>
+<script define:vars={{ mode, homeLimit: HOME_YEAR_LIMIT }}>
+  window.__ANTHOLOGY_MODE__ = mode;
+  window.__ANTHOLOGY_HOME_LIMIT__ = homeLimit;
+</script>
+
+<script>
+  interface Entry {
+    id: string; title: string; category: string; tags: string[];
+    year: number; month: number; day: number; dateISO: string;
+    hasVideo: boolean; excerpt: string;
+  }
+
+  // 把 (month,day) 投影到固定基准年 2001（平年）算"离年初第几天"，消除闰年污染。
+  // 2001 无 2-29，故 2 月的 day 先 clamp 到 28，避免 Date 溢出到 3 月反而污染距离。
+  function ordinal(month: number, day: number): number {
+    const safeDay = (month === 2 && day > 28) ? 28 : day;
+    const ms = Date.UTC(2001, month - 1, safeDay) - Date.UTC(2001, 0, 1);
+    return Math.round(ms / 86400000);
+  }
+
+  function pickPerYear(all: Entry[], tMonth: number, tDay: number) {
+    const byYear = new Map<number, Entry[]>();
+    for (const e of all) {
+      if (!byYear.has(e.year)) byYear.set(e.year, []);
+      byYear.get(e.year)!.push(e);
+    }
+    const years = [...byYear.keys()].sort((a, b) => b - a); // 新→旧
+    const tOrd = ordinal(tMonth, tDay);
+    const result: Array<{ entry: Entry; kind: 'exact' | 'near' }> = [];
+    for (const y of years) {
+      const list = byYear.get(y)!;
+      const exact = list.filter(e => e.month === tMonth && e.day === tDay);
+      if (exact.length > 0) {
+        for (const e of exact) result.push({ entry: e, kind: 'exact' });
+      } else {
+        let best: Entry | null = null, bestDist = Infinity;
+        for (const e of list) {
+          const d = Math.abs(ordinal(e.month, e.day) - tOrd);
+          // tie-break: 距离相等取 dateISO 更晚；再相等取 title 字典序
+          if (d < bestDist ||
+              (d === bestDist && best && (e.dateISO > best.dateISO ||
+               (e.dateISO === best.dateISO && e.title < best.title)))) {
+            best = e; bestDist = d;
+          }
+        }
+        if (best) result.push({ entry: best, kind: 'near' });
+      }
+    }
+    return result;
+  }
+
+  function fmtDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function buildCard(e: Entry, kind: 'exact' | 'near'): HTMLAnchorElement {
+    const a = document.createElement('a');
+    a.href = `/poems/${e.id}`;              // id 含年份，命中 /poems/<year>/<title>
+    a.className = 'poem-card';
+    const badge = e.hasVideo ? '<span class="video-badge" title="有朗诵视频">🎬</span>' : '';
+    const mark = kind === 'exact'
+      ? '<span class="tag anthology-mark">往年今日</span>'
+      : `<span class="tag anthology-mark">近 · ${fmtDate(e.dateISO)}</span>`;
+    a.innerHTML = `
+      <div class="poem-card-header">
+        <h3 class="poem-card-title">${e.title}</h3>
+        ${badge}
+      </div>
+      <p class="poem-card-excerpt">${e.excerpt}</p>
+      <div class="poem-card-footer">
+        <div class="poem-card-tags">
+          ${mark}
+          <span class="tag">${e.category}</span>
+          ${e.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+        </div>
+        <span class="poem-card-date">${fmtDate(e.dateISO)}</span>
+      </div>`;
+    return a;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const raw = document.getElementById('anthology-data')?.innerHTML ?? '[]';
+    const data: Entry[] = JSON.parse(raw);
+    const list = document.getElementById('anthology-list');
+    const placeholder = document.getElementById('anthology-placeholder');
+    if (!list) return;
+
+    const now = new Date();
+    const tMonth = now.getMonth() + 1;   // 访客本地时区"今天"
+    const tDay = now.getDate();
+
+    let picks = pickPerYear(data, tMonth, tDay);
+    const mode = (window as any).__ANTHOLOGY_MODE__ ?? 'full';
+    const homeLimit = (window as any).__ANTHOLOGY_HOME_LIMIT__ ?? 3;
+    if (mode === 'home') picks = picks.slice(0, homeLimit);
+
+    placeholder?.remove();
+    if (picks.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'anthology-placeholder';
+      p.textContent = '今日暂无往年诗作';
+      list.appendChild(p);
+      return;
+    }
+    for (const { entry, kind } of picks) list.appendChild(buildCard(entry, kind));
+  });
+</script>
+
+<style>
+  .anthology-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .anthology-more {
+    font-size: 13px;
+    color: var(--color-primary);
+    letter-spacing: 1px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .anthology-more:hover { text-decoration: underline; }
+  .anthology-placeholder {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    padding: 20px 0;
+    min-height: 60px;   /* 占位撑高，减少 JS 填充后的布局跳动 (FOUC) */
+  }
+  .anthology-mark {
+    cursor: default;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+</style>
