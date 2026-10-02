@@ -68,8 +68,12 @@ const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
     return Math.min(raw, 365 - raw);
   }
 
-  // 退让原则：当天命中→全列(exact)；否则在 ±3→±5→±7 天窗口内逐级退让取最近一首；
-  // 超出 ±7 天则该年不显示。
+  // 退让原则（全局统一窗口）：按 当天(exact) → ±3 → ±5 → ±7 顺序，
+  // 找到第一个"有任何年份命中"的档位即停，只展示该档位内各年命中的诗，
+  // 窗口外的年份本次不显示（严格退让）。
+  //   - exact 档：所有年份当天的诗全列（某年多首则多首全列）
+  //   - near 档：每年取该年该窗口内最近一首
+  //   - 全部档都无命中 → 返回空（触发"今日暂无往年诗作"）
   const FALLBACK_WINDOWS = [3, 5, 7];
 
   function pickPerYear(all: Entry[], tMonth: number, tDay: number) {
@@ -80,18 +84,22 @@ const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
     }
     const years = [...byYear.keys()].sort((a, b) => b - a); // 新→旧
     const tOrd = ordinal(tMonth, tDay);
-    const result: Array<{ entry: Entry; kind: 'exact' | 'near' }> = [];
+
+    // 档位 1：当天 exact，全年份全列
+    const exactAll: Array<{ entry: Entry; kind: 'exact' | 'near' }> = [];
     for (const y of years) {
-      const list = byYear.get(y)!;
-      const exact = list.filter(e => e.month === tMonth && e.day === tDay);
-      if (exact.length > 0) {
-        for (const e of exact) result.push({ entry: e, kind: 'exact' });
-        continue;
+      for (const e of byYear.get(y)!) {
+        if (e.month === tMonth && e.day === tDay) exactAll.push({ entry: e, kind: 'exact' });
       }
-      // 当天无 → 按窗口逐级退让。找到第一个有诗的窗口即停。
-      let best: Entry | null = null, bestDist = Infinity;
-      for (const win of FALLBACK_WINDOWS) {
-        for (const e of list) {
+    }
+    if (exactAll.length > 0) return exactAll;
+
+    // 档位 2-4：全局统一窗口 ±3 → ±5 → ±7，第一个有任何命中的窗口即停
+    for (const win of FALLBACK_WINDOWS) {
+      const picks: Array<{ entry: Entry; kind: 'exact' | 'near' }> = [];
+      for (const y of years) {
+        let best: Entry | null = null, bestDist = Infinity;
+        for (const e of byYear.get(y)!) {
           const d = circularDist(ordinal(e.month, e.day), tOrd);
           if (d > win) continue;
           // tie-break: 距离近者胜；相等取 dateISO 更晚；再相等取 title 字典序
@@ -101,12 +109,12 @@ const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
             best = e; bestDist = d;
           }
         }
-        if (best) break;   // 本窗口已找到，不再放宽
+        if (best) picks.push({ entry: best, kind: 'near' });
       }
-      if (best) result.push({ entry: best, kind: 'near' });
-      // best 仍为 null → 该年 ±7 天内无诗，严格退让：跳过该年
+      if (picks.length > 0) return picks;   // 本窗口有命中 → 定档，不再放宽
     }
-    return result;
+
+    return [];   // ±7 天内无任何年份命中
   }
 
   function fmtDate(iso: string): string {
