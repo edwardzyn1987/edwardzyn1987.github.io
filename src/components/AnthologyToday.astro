@@ -61,6 +61,17 @@ const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
     return Math.round(ms / 86400000);
   }
 
+  // 环形日历距离（跨年要算）：12-30 距 01-01 = 2 天，而非 363 天。
+  // 以 365 为周期取最短弧。
+  function circularDist(aOrd: number, bOrd: number): number {
+    const raw = Math.abs(aOrd - bOrd);
+    return Math.min(raw, 365 - raw);
+  }
+
+  // 退让原则：当天命中→全列(exact)；否则在 ±3→±5→±7 天窗口内逐级退让取最近一首；
+  // 超出 ±7 天则该年不显示。
+  const FALLBACK_WINDOWS = [3, 5, 7];
+
   function pickPerYear(all: Entry[], tMonth: number, tDay: number) {
     const byYear = new Map<number, Entry[]>();
     for (const e of all) {
@@ -75,19 +86,25 @@ const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
       const exact = list.filter(e => e.month === tMonth && e.day === tDay);
       if (exact.length > 0) {
         for (const e of exact) result.push({ entry: e, kind: 'exact' });
-      } else {
-        let best: Entry | null = null, bestDist = Infinity;
+        continue;
+      }
+      // 当天无 → 按窗口逐级退让。找到第一个有诗的窗口即停。
+      let best: Entry | null = null, bestDist = Infinity;
+      for (const win of FALLBACK_WINDOWS) {
         for (const e of list) {
-          const d = Math.abs(ordinal(e.month, e.day) - tOrd);
-          // tie-break: 距离相等取 dateISO 更晚；再相等取 title 字典序
+          const d = circularDist(ordinal(e.month, e.day), tOrd);
+          if (d > win) continue;
+          // tie-break: 距离近者胜；相等取 dateISO 更晚；再相等取 title 字典序
           if (d < bestDist ||
               (d === bestDist && best && (e.dateISO > best.dateISO ||
                (e.dateISO === best.dateISO && e.title < best.title)))) {
             best = e; bestDist = d;
           }
         }
-        if (best) result.push({ entry: best, kind: 'near' });
+        if (best) break;   // 本窗口已找到，不再放宽
       }
+      if (best) result.push({ entry: best, kind: 'near' });
+      // best 仍为 null → 该年 ±7 天内无诗，严格退让：跳过该年
     }
     return result;
   }
@@ -159,6 +176,17 @@ const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
 </script>
 
 <style>
+  /* 与 index.astro 的 .section-title 保持一致——该组件的 <h2> 带子组件 cid，
+     命不中页面 scoped 的 .section-title，故在组件内自带一份同值定义。 */
+  .section-title {
+    font-size: 16px;
+    color: var(--color-primary);
+    letter-spacing: 6px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+  }
   .anthology-head {
     display: flex;
     align-items: baseline;
