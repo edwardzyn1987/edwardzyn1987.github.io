@@ -45,6 +45,15 @@ const videoUrlMp4 = poem.data.video
   ? (import.meta.env.PROD ? `${VIDEO_CDN}/${encodeURIComponent(poem.data.video)}` : `/videos/${encodeURIComponent(poem.data.video)}`)
   : null;
 
+// 诗词海报图（试点：丙午 2026 九首）。图片放 public/images/poem-cards/，
+// 随站点部署（非视频的 jsDelivr 分离仓）。中文+空格文件名必须 encodeURIComponent，
+// 否则 GitHub Pages 对未编码空格 URL 返回 404（与 video 同理）。
+// 有 cardImage 时详情页主体只显示海报；诗文正文仍以视觉隐藏(.sr-only)形式保留在 DOM，
+// 供搜索引擎索引与屏幕阅读器朗读。
+const cardImageUrl = poem.data.cardImage
+  ? `/images/poem-cards/${encodeURIComponent(poem.data.cardImage)}`
+  : null;
+
 // 阅读数数据源 = GoatCounter（埋点在 BaseLayout）。
 // 本页 count 按 URL 路径统计：运行时直接读 location.pathname，
 // 保证读回路径与 count.js 记录的路径逐字一致（含 trailing slash）。
@@ -81,9 +90,20 @@ const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
         </span>
       </p>
       <div class="poem-divider"></div>
-      <div class="poem-body">
-        <Content />
-      </div>
+      {cardImageUrl ? (
+        <>
+          <button class="poem-card-img-btn" id="img-lightbox-btn" aria-label="放大查看诗词海报">
+            <img class="poem-card-img" src={cardImageUrl} alt={`${poem.data.title} 诗词海报`} loading="lazy" />
+          </button>
+          <div class="poem-body sr-only">
+            <Content />
+          </div>
+        </>
+      ) : (
+        <div class="poem-body">
+          <Content />
+        </div>
+      )}
       <div class="poem-tags">
         <span class="tag">{poem.data.category}</span>
         {poem.data.tags.map(tag => <span class="tag">{tag}</span>)}
@@ -113,6 +133,16 @@ const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
         <div class="video-modal-content">
           <video id="video-el" controls preload="none"
                  data-hls={videoUrlHls} data-mp4={videoUrlMp4}></video>
+        </div>
+      </div>
+    )}
+
+    {cardImageUrl && (
+      <div class="img-modal" id="img-modal">
+        <div class="img-modal-backdrop" id="img-modal-backdrop"></div>
+        <button class="img-modal-close" id="img-modal-close" aria-label="关闭">✕</button>
+        <div class="img-modal-content">
+          <img id="img-modal-el" src={cardImageUrl} alt={`${poem.data.title} 诗词海报`} />
         </div>
       </div>
     )}
@@ -377,6 +407,120 @@ const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
     background: rgba(0, 0, 0, 0.95);
     transform: scale(1.1);
   }
+
+  /* 诗词海报图（详情页内嵌，点击放大）——宽度填满文章容器，不再限制 max-width */
+  .poem-card-img-btn {
+    display: block;
+    margin: 0 auto;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+    width: 100%;
+  }
+
+  .poem-card-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+
+  .poem-card-img-btn:hover .poem-card-img {
+    transform: scale(1.015);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  /* 视觉隐藏但保留在 DOM：供搜索引擎索引 + 屏幕阅读器朗读 */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* 图片 lightbox —— 结构镜像 video modal，标识符全部独立避免冲突 */
+  .img-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .img-modal.open {
+    display: flex;
+  }
+
+  .img-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+  }
+
+  .img-modal-content {
+    position: relative;
+    max-width: 92vw;
+    max-height: 92vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .img-modal-content img {
+    display: block;
+    max-width: 92vw;
+    max-height: 92vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  .img-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 220;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .img-modal-close:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 768px) {
+    .img-modal-close { top: 12px; right: 12px; }
+  }
 </style>
 
 <script>
@@ -464,6 +608,40 @@ const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modal?.classList.contains('open')) {
       closeModal();
+    }
+  });
+</script>
+
+<script>
+  // 图片 lightbox —— 独立于 video modal 的全套实现（标识符不重名，避免 Astro
+  // 同模块作用域打包时 Identifier already declared 构建失败）。
+  // 无条件执行 + 全程可选链：无 cardImage 的诗页面这些元素不存在，? 容错。
+  const imgBtn = document.getElementById('img-lightbox-btn');
+  const imgModal = document.getElementById('img-modal');
+  const imgBackdrop = document.getElementById('img-modal-backdrop');
+  const imgCloseBtn = document.getElementById('img-modal-close');
+
+  // 搬到 body 下，逃离 global.css 的 `body > * { z-index:1 }` stacking context
+  // （与 video modal 同理，否则 position:fixed 盖不住内容）。
+  if (imgModal && imgModal.parentElement !== document.body) {
+    document.body.appendChild(imgModal);
+  }
+
+  function openImgModal() {
+    imgModal?.classList.add('open');
+  }
+
+  function closeImgModal() {
+    imgModal?.classList.remove('open');
+  }
+
+  imgBtn?.addEventListener('click', openImgModal);
+  imgBackdrop?.addEventListener('click', closeImgModal);
+  imgCloseBtn?.addEventListener('click', closeImgModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && imgModal?.classList.contains('open')) {
+      closeImgModal();
     }
   });
 </script>

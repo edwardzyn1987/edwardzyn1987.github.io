@@ -9,6 +9,7 @@ const poems = defineCollection({
     tags: z.array(z.string()),
     date: z.coerce.date(),
     video: z.string().optional(),
+    cardImage: z.string().optional(),
     note: z.string().optional(),
     featured: z.boolean().default(false),
     originalPoem: z.object({
