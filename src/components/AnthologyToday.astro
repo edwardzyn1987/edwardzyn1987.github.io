@@ -200,6 +200,14 @@ const HOME_YEAR_LIMIT = 3;  // mode="home" 展示前 N 年一瞥
     align-items: baseline;
     justify-content: space-between;
   }
+  /* 卡片列表的纵向间距。index.astro 的 .poem-list{gap:14px} 是 scoped 样式，
+     命不中本组件自己的 .poem-list（不同 astro-cid），故在组件内自带一份，
+     使"往日今朝"在首页内嵌时多首诗词间也有空行，与"最新发布"一致。 */
+  .poem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
   .anthology-more {
     font-size: 13px;
     color: var(--color-primary);
