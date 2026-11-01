@@ -659,7 +659,9 @@ const GOATCOUNTER = 'https://edwardpoetry.goatcounter.com';
     fetch(url)
       .then(function (r) { return r.ok ? r.json() : null; }) // 404(无数据) → null → 显示 0
       .then(function (data) {
-        var count = data && data.count != null ? parseInt(data.count, 10) : 0;
+        // count 是字符串，过千后带千分位分隔符(如 "1 129")——是 U+202F 窄不间断空格非普通空格，
+        // 必须用 [^0-9] 剥非数字字符再 parseInt，否则 parseInt("1 129") 在分隔符处截断只得 1。
+        var count = data && data.count != null ? parseInt(String(data.count).replace(/[^0-9]/g, ''), 10) : 0;
         if (isNaN(count) || count < 0) count = 0;
         if (num) num.textContent = String(count);
       })

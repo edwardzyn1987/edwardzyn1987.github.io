@@ -331,8 +331,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     fetch('https://edwardpoetry.goatcounter.com/counter/TOTAL.json?start=2020-01-01')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        // GoatCounter count 是字符串
-        const count = data && data.count != null ? parseInt(data.count, 10) : null;
+        // GoatCounter count 是字符串，过千后带千分位分隔符（如 "1 129"）——注意那是
+        // U+202F 窄不间断空格(e2 80 af)不是普通空格，.trim()/去普通空格去不掉。
+        // 必须用 [^0-9] 剥掉所有非数字字符再 parseInt，否则 parseInt("1 129") 在分隔符处截断只得 1。
+        const count = data && data.count != null ? parseInt(String(data.count).replace(/[^0-9]/g, ''), 10) : null;
         if (numEl) numEl.textContent = count === null || isNaN(count) ? '0' : count.toLocaleString();
       })
       .catch(() => { if (numEl) numEl.textContent = '—'; });
